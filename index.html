@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Chasing Dot</title>
   <style>
     body {
@@ -12,17 +12,15 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 20px;
       margin: 0;
+      padding: 20px;
     }
-    #info, #combo-msg, #challenge-msg {
-      margin-top: 10px;
-      font-size: 1.1rem;
-      text-align: center;
+    h1 {
+      font-size: 2rem;
     }
-    #combo-msg {
-      color: gold;
-      font-weight: bold;
+    #info {
+      margin: 10px 0;
+      font-size: 1rem;
     }
     #grid {
       display: grid;
@@ -32,159 +30,134 @@
       margin: 20px 0;
     }
     .cell {
+      width: 100px;
+      height: 100px;
       background: #333;
-      border-radius: 8px;
+      border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 2rem;
-      cursor: pointer;
-      user-select: none;
     }
-    button {
-      margin: 6px;
-      padding: 6px 12px;
-      background: #444;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
+    .dot {
+      width: 30px;
+      height: 30px;
+      background: radial-gradient(circle at 30% 30%, #ff3c3c, #990000);
+      border-radius: 50%;
     }
-    button:hover {
-      background: #666;
+    .hit {
+      background-image: url('https://upload.wikimedia.org/wikipedia/commons/4/45/Red_star.svg');
+      background-size: 60%;
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+    #difficulty {
+      margin-bottom: 15px;
+    }
+    #download {
+      margin-top: 25px;
     }
   </style>
 </head>
 <body>
   <h1>🎯 Chasing Dot</h1>
-  <div id="info">
-    ⏱ Time: <span id="timer">0</span>s |
-    💯 Score: <span id="score">0</span> |
-    🏆 High Score: <span id="highscore">0</span>
+
+  <div id="difficulty">
+    <label for="mode">Difficulty: </label>
+    <select id="mode">
+      <option value="normal">Normal</option>
+      <option value="hard">Hard</option>
+      <option value="challenge">Challenge Mode</option>
+    </select>
   </div>
 
-  <div id="combo-msg"></div>
-  <div id="challenge-msg"></div>
+  <div id="info">
+    🕒 Time: <span id="time">0s</span> |
+    🌟 Score: <span id="score">0</span> |
+    🏅 High Score: <span id="highScore">0</span>
+  </div>
 
-  <button onclick="downloadGame()">⬇️ Download Game</button>
   <div id="grid"></div>
 
-  <audio id="failSound" src="sounds/fail.mp3" preload="auto"></audio>
-  <audio id="bgMusic" src="sounds/bg.mp3" preload="auto" loop></audio>
-  <audio id="cheerSound" src="sounds/cheer.mp3" preload="auto"></audio>
+  <div id="download">
+    <button onclick="window.open('https://example.com/download.zip')">📁 Download Game</button>
+  </div>
 
   <script>
-    const grid = document.getElementById('grid');
-    const scoreEl = document.getElementById('score');
-    const timerEl = document.getElementById('timer');
-    const highscoreEl = document.getElementById('highscore');
-    const comboMsg = document.getElementById('combo-msg');
+    const grid = document.getElementById("grid");
+    const timeDisplay = document.getElementById("time");
+    const scoreDisplay = document.getElementById("score");
+    const highScoreDisplay = document.getElementById("highScore");
+    const modeSelect = document.getElementById("mode");
 
-    const failSound = document.getElementById('failSound');
-    const bgMusic = document.getElementById('bgMusic');
-    const cheerSound = document.getElementById('cheerSound');
-
-    let score = 0, combo = 0, time = 0;
-    let activeIndex = -1;
-    let speed = 1000;
+    let score = 0;
+    let highScore = 0;
+    let time = 0;
+    let timer;
+    let moveInterval;
     let gameStarted = false;
-    let timer, loop, soundStarted = false;
-
-    const highscore = localStorage.getItem('dotHighScore') || 0;
-    highscoreEl.textContent = highscore;
+    let currentDot;
+    let gameSpeed = 1000;
 
     for (let i = 0; i < 9; i++) {
-      const cell = document.createElement('div');
-      cell.className = 'cell';
+      const cell = document.createElement("div");
+      cell.classList.add("cell");
       cell.dataset.index = i;
       grid.appendChild(cell);
     }
 
-    const cells = document.querySelectorAll('.cell');
-
-    function showFirstDot() {
-      const index = Math.floor(Math.random() * 9);
-      cells[index].textContent = '🔴';
-      activeIndex = index;
-    }
-
-    function randomDot() {
-      if (activeIndex >= 0) cells[activeIndex].textContent = '';
-      const index = Math.floor(Math.random() * 9);
-      cells[index].textContent = '🔴';
-      activeIndex = index;
-
-      setTimeout(() => {
-        if (cells[index].textContent === '🔴') endGame();
-      }, 1000);
-    }
-
-    function handleClick(e) {
-      if (e.target.textContent !== '🔴') return endGame();
-
-      e.target.textContent = '🟢';
-      score++; combo++;
-      scoreEl.textContent = score;
-
-      if (!soundStarted) {
-        bgMusic.volume = 0.3;
-        bgMusic.play().catch(() => {});
-        soundStarted = true;
-      }
-
-      if (!gameStarted) {
-        gameStarted = true;
-        loop = setInterval(randomDot, speed);
-        startTimer();
-      }
-
-      if (combo % 10 === 0) {
-        comboMsg.textContent = `🔥 COMBO x${combo}!`;
-        cheerSound.pause(); cheerSound.currentTime = 0; cheerSound.play();
-      } else {
-        comboMsg.textContent = '';
-      }
-
-      clearInterval(loop);
-      speed = Math.max(300, speed - 30);
-      setTimeout(() => {
-        loop = setInterval(randomDot, speed);
-      }, 100);
-    }
-
-    function startTimer() {
+    function startGame() {
+      if (gameStarted) return;
+      gameStarted = true;
+      time = 0;
+      score = 0;
+      scoreDisplay.textContent = score;
       timer = setInterval(() => {
         time++;
-        timerEl.textContent = time;
+        timeDisplay.textContent = `${time}s`;
       }, 1000);
+      moveDot();
+      moveInterval = setInterval(moveDot, gameSpeed);
     }
 
-    function endGame() {
-      clearInterval(loop);
-      clearInterval(timer);
-      failSound.pause(); failSound.currentTime = 0;
-      failSound.play();
-      bgMusic.pause();
-      comboMsg.textContent = '';
-      const best = localStorage.getItem('dotHighScore') || 0;
-      if (score > best) {
-        localStorage.setItem('dotHighScore', score);
-        alert("🎉 NEW HIGH SCORE: " + score);
-      } else {
-        alert("Game Over! Your score: " + score);
+    function moveDot() {
+      const cells = document.querySelectorAll(".cell");
+      cells.forEach(cell => {
+        cell.innerHTML = "";
+        cell.classList.remove("hit");
+      });
+      const index = Math.floor(Math.random() * 9);
+      currentDot = index;
+      const dot = document.createElement("div");
+      dot.classList.add("dot");
+      cells[index].appendChild(dot);
+    }
+
+    grid.addEventListener("click", (e) => {
+      const cell = e.target.closest(".cell");
+      if (!cell) return;
+      const clickedIndex = parseInt(cell.dataset.index);
+      if (!gameStarted) {
+        adjustSpeed();
+        startGame();
       }
-      location.reload();
-    }
+      if (clickedIndex === currentDot) {
+        score++;
+        scoreDisplay.textContent = score;
+        if (score > highScore) {
+          highScore = score;
+          highScoreDisplay.textContent = highScore;
+        }
+        cell.classList.add("hit");
+        currentDot = null;
+      }
+    });
 
-    function downloadGame() {
-      window.open("https://github.com/Adel1997-c/chasing-dot/archive/refs/heads/main.zip", "_blank");
+    function adjustSpeed() {
+      const mode = modeSelect.value;
+      if (mode === "hard") gameSpeed = 600;
+      else if (mode === "challenge") gameSpeed = 300;
+      else gameSpeed = 1000;
     }
-
-    cells.forEach(cell => cell.addEventListener('click', handleClick));
-    showFirstDot();
   </script>
-
-  <!-- Adsterra / Propeller placeholder (replace with your own script) -->
-  <script type='text/javascript' src='//pl26612890.profitableratecpm.com/24/06/95/240695f3aaeb6d2182a3800363e46177.js'></script>
 </body>
 </html>
