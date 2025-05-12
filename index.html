@@ -8,11 +8,12 @@
   <link rel="icon" href="icon-192.png" />
   <style>
     body {
-      background: #111;
-      color: white;
       font-family: Arial, sans-serif;
+      background: var(--bgColor, #111);
+      color: white;
       text-align: center;
-      margin: 0; padding: 10px;
+      margin: 0;
+      padding: 10px;
     }
     #grid {
       display: grid;
@@ -23,45 +24,59 @@
       margin: 20px auto;
     }
     .cell {
-      width: 100px; height: 100px;
+      width: 100px;
+      height: 100px;
       background: #333;
       border-radius: 10px;
     }
     .dot {
-      width: 100%; height: 100%;
+      width: 100%;
+      height: 100%;
       border-radius: 50%;
       background: red;
     }
     .missed { background: red !important; }
+    #store {
+      background: #222;
+      padding: 10px;
+      border-radius: 10px;
+      margin-top: 20px;
+      display: none;
+    }
     .storeitem {
-      margin: 6px; padding: 6px;
-      background: #222; border-radius: 6px;
+      margin: 5px;
+      padding: 5px;
+      background: #333;
+      border-radius: 5px;
       cursor: pointer;
     }
-    #store { display: none; padding: 10px; }
+    #reviveBox {
+      margin-top: 20px;
+      color: red;
+    }
   </style>
 </head>
 <body>
-  <h2>🎯 Chasing Dot</h2>
-  <div>
+  <h1>🎯 Chasing Dot</h1>
+  <p>
     Score: <span id="score">0</span> |
     Lives: <span id="lives">3</span> |
     High Score: <span id="highScore">0</span> |
     Coins: <span id="coins">0</span> |
     Ad Clicks: <span id="adClicksDisplay">0</span>
-  </div>
-  <button onclick="toggleStore()">🛍️ Store</button>
+  </p>
+  <button onclick="toggleStore()">🛍️ Open/Close Store</button>
   <div id="grid"></div>
 
   <div id="store">
-    <h3>Skins</h3>
+    <h3>🎨 Skins</h3>
     <div class="storeitem" data-skin="red" data-cost="0">🔴 Red - Free</div>
     <div class="storeitem" data-skin="dog" data-cost="10">🐶 Dog - 10 coins</div>
     <div class="storeitem" data-skin="rainbow" data-cost="15">🌈 Rainbow - 15 coins</div>
-    <h3>Themes</h3>
+    <h3>🌄 Themes</h3>
     <div class="storeitem" data-theme="forest" data-cost="10">🌲 Forest</div>
     <div class="storeitem" data-theme="neon" data-cost="15">💡 Neon</div>
-    <div class="storeitem" data-theme="desert" data-cost="20">🏜 Desert</div>
+    <div class="storeitem" data-theme="desert" data-cost="20">🏜️ Desert</div>
   </div>
 
   <div id="reviveBox" style="display:none;">
@@ -72,185 +87,3 @@
   <audio id="bgMusic" loop src="sounds/bg.mp3"></audio>
   <audio id="cheer" src="sounds/cheer.mp3"></audio>
   <audio id="boo" src="sounds/boo.mp3"></audio>
-
-  <script>
-    const grid = document.getElementById("grid");
-    const scoreEl = document.getElementById("score");
-    const livesEl = document.getElementById("lives");
-    const highScoreEl = document.getElementById("highScore");
-    const coinsEl = document.getElementById("coins");
-    const adClicksDisplay = document.getElementById("adClicksDisplay");
-    const store = document.getElementById("store");
-    const reviveBox = document.getElementById("reviveBox");
-    const bgMusic = document.getElementById("bgMusic");
-    const boo = document.getElementById("boo");
-    const cheer = document.getElementById("cheer");
-
-    let score = 0, lives = 3, highScore = 0, coins = 0, adClicks = 0;
-    let started = false, dotIndex = 4, moveSpeed = 1500, interval;
-    let selectedSkin = "red", selectedTheme = "";
-    let unlocked = JSON.parse(localStorage.getItem("unlocked") || '{"skins":["red"],"themes":[]}');
-
-    window.addEventListener('click', () => {
-      if (!bgMusic.played.length) {
-        bgMusic.volume = 0.5;
-        bgMusic.play().catch(() => {});
-      }
-    });
-
-    function updateStats() {
-      scoreEl.textContent = score;
-      livesEl.textContent = lives;
-      highScoreEl.textContent = highScore;
-      coinsEl.textContent = coins;
-      adClicksDisplay.textContent = adClicks;
-    }
-
-    function saveProgress() {
-      localStorage.setItem("highScore", highScore);
-      localStorage.setItem("coins", coins);
-      localStorage.setItem("adClicks", adClicks);
-      localStorage.setItem("unlocked", JSON.stringify(unlocked));
-      localStorage.setItem("skin", selectedSkin);
-      localStorage.setItem("theme", selectedTheme);
-    }
-
-    function placeDot(i) {
-      document.querySelectorAll(".cell").forEach((c, x) => {
-        c.innerHTML = x === i ? `<div class="dot" style="background:${getSkinColor()}"></div>` : "";
-        c.className = "cell";
-      });
-    }
-
-    function getSkinColor() {
-      if (selectedSkin === "dog") return "#c96";
-      if (selectedSkin === "rainbow") return "linear-gradient(45deg, red, orange, yellow, green, blue)";
-      return "red";
-    }
-
-    function handleClick(i) {
-      if (lives <= 0) return;
-      if (!started && i === dotIndex) {
-        started = true;
-        score = 1; coins++;
-        updateStats();
-        interval = setInterval(nextDot, moveSpeed);
-        nextDot();
-        return;
-      }
-      if (i === dotIndex) {
-        score++; coins++;
-        if (score > highScore) highScore = score;
-        if (score % 10 === 0 && moveSpeed > 500) {
-          cheer.play();
-          moveSpeed -= 100;
-          clearInterval(interval);
-          interval = setInterval(nextDot, moveSpeed);
-        }
-        nextDot();
-      } else {
-        lives--; boo.play();
-        document.querySelectorAll(".cell")[i].classList.add("missed");
-        if (lives <= 0) {
-          clearInterval(interval);
-          reviveBox.style.display = "block";
-          localStorage.setItem("cooldown", Date.now());
-        }
-      }
-      updateStats(); saveProgress();
-    }
-
-    function nextDot() {
-      dotIndex = Math.floor(Math.random() * 9);
-      placeDot(dotIndex);
-    }
-
-    function toggleStore() {
-      store.style.display = store.style.display === "none" ? "block" : "none";
-    }
-
-    function watchAdToRevive() {
-      const win = window.open("https://www.profitableratecpm.com/drmjgriq2?key=f3d635f9a014d5973a07432322c6ea01", "_blank");
-      adClicks++;
-      updateStats(); saveProgress();
-
-      // ✅ Send Telegram alert
-      fetch("https://api.telegram.org/bot7589841709:AAFYtgAGBP0nOE02zTw47ERIIHWs1qyopuQ/sendMessage", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_id: "1179906244",
-          text: `📢 New Ad Click!\nScore: ${score}\nCoins: ${coins}\nAdClicks: ${adClicks}`
-        })
-      });
-
-      setTimeout(() => {
-        if (win) win.close();
-        lives = 1; started = false;
-        reviveBox.style.display = "none";
-        grid.innerHTML = "";
-        for (let i = 0; i < 9; i++) {
-          const cell = document.createElement("div");
-          cell.className = "cell";
-          cell.addEventListener("click", () => handleClick(i));
-          grid.appendChild(cell);
-        }
-        dotIndex = 4;
-        placeDot(dotIndex);
-        updateStats(); saveProgress();
-      }, 10000);
-    }
-
-    document.querySelectorAll(".storeitem").forEach(item => {
-      item.onclick = () => {
-        const skin = item.dataset.skin;
-        const theme = item.dataset.theme;
-        const cost = parseInt(item.dataset.cost || "0");
-        if (skin && !unlocked.skins.includes(skin)) {
-          if (coins < cost) return alert("Not enough coins!");
-          coins -= cost; unlocked.skins.push(skin); selectedSkin = skin;
-        }
-        if (theme && !unlocked.themes.includes(theme)) {
-          if (coins < cost) return alert("Not enough coins!");
-          coins -= cost; unlocked.themes.push(theme); selectedTheme = theme;
-          document.body.style.background =
-            theme === "forest" ? "#1e3d2f" : theme === "neon" ? "#001133" :
-            theme === "desert" ? "#806c3b" : "#111";
-        }
-        updateStats(); saveProgress();
-      };
-    });
-
-    window.onload = () => {
-      highScore = parseInt(localStorage.getItem("highScore") || "0");
-      coins = parseInt(localStorage.getItem("coins") || "0");
-      adClicks = parseInt(localStorage.getItem("adClicks") || "0");
-      selectedSkin = localStorage.getItem("skin") || "red";
-      selectedTheme = localStorage.getItem("theme") || "";
-      if (selectedTheme === "forest") document.body.style.background = "#1e3d2f";
-      if (selectedTheme === "neon") document.body.style.background = "#001133";
-      if (selectedTheme === "desert") document.body.style.background = "#806c3b";
-
-      const cooldown = parseInt(localStorage.getItem("cooldown") || "0");
-      const timeLeft = 5 * 60 * 1000 - (Date.now() - cooldown);
-      if (timeLeft > 0) {
-        reviveBox.style.display = "block";
-        document.getElementById("cooldownText").textContent = `(Wait ${(timeLeft / 1000).toFixed(0)}s or watch ad)`;
-      } else {
-        for (let i = 0; i < 9; i++) {
-          const cell = document.createElement("div");
-          cell.className = "cell";
-          cell.addEventListener("click", () => handleClick(i));
-          grid.appendChild(cell);
-        }
-        placeDot(dotIndex);
-      }
-      updateStats();
-    };
-
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register("service-worker.js");
-    }
-  </script>
-</body>
-</html>
