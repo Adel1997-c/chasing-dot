@@ -128,58 +128,7 @@
       grid.children[index].appendChild(dot);
     }
 
-    function handleClick(i) {
-      if (!musicStarted) {
-        bgMusic.volume = 0.5;
-        bgMusic.play().catch(() => {});
-        musicStarted = true;
-      }
-      if (lives <= 0) return;
-
-      if (!started) {
-        if (i === dotIndex) {
-          started = true;
-          score = 1;
-          coins++;
-          updateStats();
-          placeDot(Math.floor(Math.random() * 9));
-          interval = setInterval(() => placeDot(Math.floor(Math.random() * 9)), moveSpeed);
-        } else {
-          lives--;
-          boo.play();
-          grid.children[i].classList.add("missed");
-          setTimeout(() => grid.children[i].classList.remove("missed"), 300);
-          updateStats();
-        }
-        return;
-      }
-
-      if (i === dotIndex) {
-        score++;
-        if (score > highScore) highScore = score;
-        if (score % 10 === 0) {
-          coins++;
-          cheer.play();
-          if (moveSpeed > 200) moveSpeed -= 100;
-          clearInterval(interval);
-          interval = setInterval(() => placeDot(Math.floor(Math.random() * 9)), moveSpeed);
-        }
-        updateStats();
-        placeDot(Math.floor(Math.random() * 9));
-      } else {
-        lives--;
-        boo.play();
-        grid.children[i].classList.add("missed");
-        setTimeout(() => grid.children[i].classList.remove("missed"), 300);
-        updateStats();
-        if (lives <= 0) {
-          clearInterval(interval);
-          document.getElementById("reviveBox").style.display = "block";
-        }
-      }
-      saveProgress();
-    }
-
+   handleClick
     function updateStats() {
       scoreEl.textContent = score;
       livesEl.textContent = lives;
