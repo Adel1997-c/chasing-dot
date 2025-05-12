@@ -8,20 +8,24 @@
   <style>
     :root { --ballColor: red; --bgColor: #111; }
     body {
-      background: var(--bgColor); color: white; font-family: Arial, sans-serif;
-      padding: 60px 10px 90px; text-align: center; margin: 0;
+      background: var(--bgColor); color: white;
+      font-family: Arial, sans-serif; padding: 60px 10px 90px;
+      text-align: center; margin: 0;
     }
     #downloadBtn {
-      position: fixed; top: 10px; left: 10px; background: #007bff; color: white;
-      border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer;
+      position: fixed; top: 10px; left: 10px;
+      background: #007bff; color: white;
+      border: none; padding: 8px 12px;
+      border-radius: 5px; cursor: pointer;
     }
     #grid {
-      display: grid; grid-template-columns: repeat(3, 100px); gap: 10px;
-      justify-content: center; margin: 20px auto;
+      display: grid; grid-template-columns: repeat(3, 100px);
+      gap: 10px; justify-content: center; margin: 20px auto;
     }
     .cell {
-      background: #333; width: 100px; height: 100px; border-radius: 8px;
-      display: flex; justify-content: center; align-items: center; cursor: pointer;
+      background: #333; width: 100px; height: 100px;
+      border-radius: 8px; display: flex;
+      justify-content: center; align-items: center; cursor: pointer;
     }
     .dot {
       width: 50px; height: 50px; border-radius: 50%;
@@ -29,12 +33,13 @@
     }
     .missed { background: darkred !important; }
     #storePanel {
-      background: #222; padding: 15px; border-radius: 10px;
-      max-width: 360px; margin: 0 auto 20px; display: none;
+      background: #222; padding: 15px;
+      border-radius: 10px; max-width: 360px;
+      margin: 0 auto 20px; display: none;
     }
     .storeItem {
-      margin: 10px 0; padding: 8px; background: #333;
-      border-radius: 8px; cursor: pointer;
+      margin: 10px 0; padding: 8px;
+      background: #333; border-radius: 8px; cursor: pointer;
     }
     .locked { opacity: 0.6; }
     iframe#ad {
@@ -72,6 +77,7 @@
   <audio id="cheer" src="sounds/cheer.mp3"></audio>
   <audio id="boo" src="sounds/boo.mp3"></audio>
   <iframe id="ad" src="https://www.profitableratecpm.com/drmjgriq2?key=f3d635f9a014d5973a07432322c6ea01"></iframe>
+
   <script>
     const grid = document.getElementById("grid"),
       scoreEl = document.getElementById("score"),
@@ -83,7 +89,7 @@
       boo = document.getElementById("boo");
 
     let score = 0, lives = 3, highScore = 0, dotIndex = 4,
-        started = false, musicStarted = false, moveSpeed = 1000, interval,
+        started = false, musicStarted = false, moveSpeed = 1500, interval,
         coins = 0, cells = [],
         unlocked = JSON.parse(localStorage.getItem("unlocked")) || { skins: ["red"], themes: [] },
         selectedSkin = localStorage.getItem("skin") || "red",
@@ -152,7 +158,7 @@
         if (score % 10 === 0) {
           coins++;
           cheer.play();
-          if (moveSpeed > 200) moveSpeed -= 100;
+          if (moveSpeed > 500) moveSpeed -= 100; // SLOW TO FAST transition
           clearInterval(interval);
           interval = setInterval(() => {
             dotIndex = Math.floor(Math.random() * 9);
@@ -237,7 +243,7 @@
         grid.appendChild(cell);
         cells.push(cell);
       }
-      placeDot(dotIndex = 4);
+      placeDot(dotIndex = 4); // Always starts centered
     }
 
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('service-worker.js');
