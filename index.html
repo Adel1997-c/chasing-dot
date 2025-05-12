@@ -37,6 +37,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      transition: background 0.3s;
     }
     .dot {
       width: 30px;
@@ -45,16 +46,28 @@
       border-radius: 50%;
     }
     .hit {
-      background-image: url('https://upload.wikimedia.org/wikipedia/commons/4/45/Red_star.svg');
-      background-size: 60%;
-      background-repeat: no-repeat;
-      background-position: center;
+      background: #2ecc71 !important;
+    }
+    .miss {
+      background: #c0392b !important;
     }
     #difficulty {
       margin-bottom: 15px;
     }
     #download {
       margin-top: 25px;
+    }
+    #download button {
+      background: #333;
+      color: white;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 5px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    #download button:hover {
+      background: #555;
     }
   </style>
 </head>
@@ -79,8 +92,12 @@
   <div id="grid"></div>
 
   <div id="download">
-    <button onclick="window.open('https://example.com/download.zip')">📁 Download Game</button>
+    <button onclick="window.open('https://example.com/download.zip')">📱 Download Game</button>
   </div>
+
+  <audio id="bgMusic" src="sounds/bg.mp3" loop preload="auto"></audio>
+  <audio id="failSound" src="sounds/fail.mp3" preload="auto"></audio>
+  <audio id="cheerSound" src="sounds/cheer.mp3" preload="auto"></audio>
 
   <script>
     const grid = document.getElementById("grid");
@@ -88,6 +105,10 @@
     const scoreDisplay = document.getElementById("score");
     const highScoreDisplay = document.getElementById("highScore");
     const modeSelect = document.getElementById("mode");
+
+    const bgMusic = document.getElementById("bgMusic");
+    const failSound = document.getElementById("failSound");
+    const cheerSound = document.getElementById("cheerSound");
 
     let score = 0;
     let highScore = 0;
@@ -97,6 +118,7 @@
     let gameStarted = false;
     let currentDot;
     let gameSpeed = 1000;
+    let soundStarted = false;
 
     for (let i = 0; i < 9; i++) {
       const cell = document.createElement("div");
@@ -117,13 +139,15 @@
       }, 1000);
       moveDot();
       moveInterval = setInterval(moveDot, gameSpeed);
+      bgMusic.volume = 0.3;
+      bgMusic.play().catch(() => {});
     }
 
     function moveDot() {
       const cells = document.querySelectorAll(".cell");
       cells.forEach(cell => {
         cell.innerHTML = "";
-        cell.classList.remove("hit");
+        cell.classList.remove("hit", "miss");
       });
       const index = Math.floor(Math.random() * 9);
       currentDot = index;
@@ -136,19 +160,26 @@
       const cell = e.target.closest(".cell");
       if (!cell) return;
       const clickedIndex = parseInt(cell.dataset.index);
+
       if (!gameStarted) {
         adjustSpeed();
         startGame();
       }
+
       if (clickedIndex === currentDot) {
         score++;
         scoreDisplay.textContent = score;
+        if (score % 10 === 0) cheerSound.play();
         if (score > highScore) {
           highScore = score;
           highScoreDisplay.textContent = highScore;
         }
         cell.classList.add("hit");
         currentDot = null;
+      } else {
+        failSound.play();
+        cell.classList.add("miss");
+        stopGame();
       }
     });
 
@@ -157,6 +188,12 @@
       if (mode === "hard") gameSpeed = 600;
       else if (mode === "challenge") gameSpeed = 300;
       else gameSpeed = 1000;
+    }
+
+    function stopGame() {
+      clearInterval(timer);
+      clearInterval(moveInterval);
+      gameStarted = false;
     }
   </script>
 </body>
