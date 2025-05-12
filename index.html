@@ -10,12 +10,12 @@
       --ballColor: red;
     }
     body {
-      margin: 0;
       font-family: Arial, sans-serif;
       background: #111;
       color: white;
-      text-align: center;
       padding-top: 60px;
+      text-align: center;
+      margin: 0;
     }
     #downloadBtn {
       position: fixed;
@@ -27,9 +27,6 @@
       padding: 8px 12px;
       border-radius: 5px;
       cursor: pointer;
-    }
-    #stats {
-      margin-bottom: 10px;
     }
     #grid {
       display: grid;
@@ -55,7 +52,7 @@
       background: var(--ballColor);
     }
     .missed {
-      background-color: darkred !important;
+      background: darkred !important;
     }
     #achievements {
       margin-top: 20px;
@@ -66,7 +63,7 @@
   <button id="downloadBtn" onclick="downloadGame()">📱 Download</button>
 
   <h2>🎯 Chasing Dot</h2>
-  <div id="stats">
+  <div>
     Score: <span id="score">0</span> |
     Lives: <span id="lives">3</span> |
     High Score: <span id="highScore">0</span>
@@ -97,24 +94,22 @@
     </ul>
   </div>
 
+  <audio id="bgMusic" src="sounds/bg.mp3" loop preload="auto"></audio>
+
   <script>
     const grid = document.getElementById("grid");
     const scoreEl = document.getElementById("score");
     const livesEl = document.getElementById("lives");
     const highScoreEl = document.getElementById("highScore");
     const colorSelect = document.getElementById("colorSelect");
+    const bgMusic = document.getElementById("bgMusic");
 
-    let score = 0;
-    let lives = 3;
-    let highScore = 0;
-    let isStarted = false;
-    let dotIndex = 4;
-    let interval = null;
-    let moveSpeed = 1000;
+    let score = 0, lives = 3, highScore = 0;
+    let isStarted = false, dotIndex = 4, clicked = false;
+    let interval = null, moveSpeed = 1000, musicStarted = false;
 
     const cells = [];
 
-    // Setup grid
     for (let i = 0; i < 9; i++) {
       const cell = document.createElement("div");
       cell.className = "cell";
@@ -137,8 +132,18 @@
       cells[index].appendChild(dot);
     }
 
+    function startMusicOnce() {
+      if (!musicStarted) {
+        bgMusic.volume = 0.5;
+        bgMusic.play().catch(err => console.log("Autoplay blocked:", err));
+        musicStarted = true;
+      }
+    }
+
     function handleClick(i) {
       if (lives <= 0) return;
+
+      startMusicOnce();
 
       if (!isStarted) {
         if (i === dotIndex) {
@@ -152,14 +157,13 @@
         }
       } else if (i === dotIndex) {
         score++;
+        if (score > highScore) highScore = score;
         if (score % 10 === 0 && moveSpeed > 200) moveSpeed -= 100;
         unlockAchievements(score);
-        if (score > highScore) {
-          highScore = score;
-        }
         moveDot();
       } else {
         lives--;
+        livesEl.textContent = lives;
         cells[i].classList.add("missed");
         setTimeout(() => cells[i].classList.remove("missed"), 300);
         if (lives <= 0) {
@@ -191,11 +195,15 @@
       window.open("chasing-dot.zip", "_blank");
     }
 
-    // Initialize
-    placeDot(dotIndex);
+    document.getElementById("colorSelect").addEventListener("change", e => {
+      document.documentElement.style.setProperty("--ballColor", e.target.value);
+    });
+
+    // Initial dot in center
+    placeDot(4);
     updateStats();
 
-    // PWA support
+    // Register PWA service worker
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("service-worker.js");
     }
