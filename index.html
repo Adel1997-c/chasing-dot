@@ -3,17 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>🎯 Chasing Dot</title>
+  <title>Chasing Dot</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon-192.png" />
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: var(--bgColor, #111);
+      background: #111;
       color: white;
+      font-family: Arial, sans-serif;
       text-align: center;
-      margin: 0;
-      padding: 10px;
+      margin: 0; padding: 10px;
     }
     #grid {
       display: grid;
@@ -24,63 +23,52 @@
       margin: 20px auto;
     }
     .cell {
-      width: 100px;
-      height: 100px;
+      width: 100px; height: 100px;
       background: #333;
       border-radius: 10px;
     }
     .dot {
-      background: var(--dotColor, red);
+      width: 100%; height: 100%;
       border-radius: 50%;
-      width: 100%;
-      height: 100%;
+      background: red;
     }
-    .missed { background: red; }
-    #store {
-      background: #222;
-      padding: 10px;
-      border-radius: 10px;
-      margin-top: 20px;
-      display: none;
-    }
+    .missed { background: red !important; }
     .storeitem {
-      margin: 5px;
-      padding: 5px;
-      background: #333;
-      border-radius: 5px;
+      margin: 6px; padding: 6px;
+      background: #222; border-radius: 6px;
       cursor: pointer;
     }
-    #reviveBox {
-      margin-top: 20px;
-      color: red;
-    }
+    #store { display: none; padding: 10px; }
   </style>
 </head>
 <body>
-  <h1>🎯 Chasing Dot</h1>
-  <p>
-    <span id="score">Score: 0</span> |
-    <span id="lives">Lives: 3</span> |
-    <span id="highScore">High Score: 0</span> |
-    <span id="coins">🪙 Coins: 0</span>
-  </p>
-  <p>📈 Ad Clicks Tracked: <span id="adClicksDisplay">0</span></p>
-  <button onclick="toggleStore()">🛍️ Open/Close Store</button>
+  <h2>🎯 Chasing Dot</h2>
+  <div>
+    Score: <span id="score">0</span> |
+    Lives: <span id="lives">3</span> |
+    High Score: <span id="highScore">0</span> |
+    Coins: <span id="coins">0</span> |
+    Ad Clicks: <span id="adClicksDisplay">0</span>
+  </div>
+  <button onclick="toggleStore()">🛍️ Store</button>
   <div id="grid"></div>
+
   <div id="store">
-    <h3>🎨 Skins</h3>
+    <h3>Skins</h3>
     <div class="storeitem" data-skin="red" data-cost="0">🔴 Red - Free</div>
     <div class="storeitem" data-skin="dog" data-cost="10">🐶 Dog - 10 coins</div>
     <div class="storeitem" data-skin="rainbow" data-cost="15">🌈 Rainbow - 15 coins</div>
-    <h3>🌄 Themes</h3>
-    <div class="storeitem" data-theme="forest" data-cost="10">🌲 Forest - 10 coins</div>
-    <div class="storeitem" data-theme="neon" data-cost="15">💡 Neon - 15 coins</div>
-    <div class="storeitem" data-theme="desert" data-cost="20">🏜️ Desert - 20 coins</div>
+    <h3>Themes</h3>
+    <div class="storeitem" data-theme="forest" data-cost="10">🌲 Forest</div>
+    <div class="storeitem" data-theme="neon" data-cost="15">💡 Neon</div>
+    <div class="storeitem" data-theme="desert" data-cost="20">🏜 Desert</div>
   </div>
+
   <div id="reviveBox" style="display:none;">
-    <p>❌ Game Over. <span id="cooldownText"></span></p>
+    <p>💀 You lost! <span id="cooldownText"></span></p>
     <button onclick="watchAdToRevive()">❤️ Watch Ad to Revive</button>
   </div>
+
   <audio id="bgMusic" loop src="sounds/bg.mp3"></audio>
   <audio id="cheer" src="sounds/cheer.mp3"></audio>
   <audio id="boo" src="sounds/boo.mp3"></audio>
@@ -91,20 +79,16 @@
     const livesEl = document.getElementById("lives");
     const highScoreEl = document.getElementById("highScore");
     const coinsEl = document.getElementById("coins");
+    const adClicksDisplay = document.getElementById("adClicksDisplay");
     const store = document.getElementById("store");
     const reviveBox = document.getElementById("reviveBox");
-    const cheer = document.getElementById("cheer");
-    const boo = document.getElementById("boo");
     const bgMusic = document.getElementById("bgMusic");
+    const boo = document.getElementById("boo");
+    const cheer = document.getElementById("cheer");
 
-    let score = 0, lives = 3, highScore = 0, coins = 0;
-    let adClicks = parseInt(localStorage.getItem("adClicks") || "0");
-    let dotIndex = 4;
-    let started = false;
-    let moveSpeed = 1500;
-    let interval;
-    let selectedSkin = "red";
-    let selectedTheme = "";
+    let score = 0, lives = 3, highScore = 0, coins = 0, adClicks = 0;
+    let started = false, dotIndex = 4, moveSpeed = 1500, interval;
+    let selectedSkin = "red", selectedTheme = "";
     let unlocked = JSON.parse(localStorage.getItem("unlocked") || '{"skins":["red"],"themes":[]}');
 
     window.addEventListener('click', () => {
@@ -115,25 +99,25 @@
     });
 
     function updateStats() {
-      scoreEl.textContent = `Score: ${score}`;
-      livesEl.textContent = `Lives: ${lives}`;
-      highScoreEl.textContent = `High Score: ${highScore}`;
-      coinsEl.textContent = `🪙 Coins: ${coins}`;
-      document.getElementById("adClicksDisplay").textContent = adClicks;
+      scoreEl.textContent = score;
+      livesEl.textContent = lives;
+      highScoreEl.textContent = highScore;
+      coinsEl.textContent = coins;
+      adClicksDisplay.textContent = adClicks;
     }
 
     function saveProgress() {
       localStorage.setItem("highScore", highScore);
       localStorage.setItem("coins", coins);
+      localStorage.setItem("adClicks", adClicks);
       localStorage.setItem("unlocked", JSON.stringify(unlocked));
       localStorage.setItem("skin", selectedSkin);
       localStorage.setItem("theme", selectedTheme);
-      localStorage.setItem("adClicks", adClicks);
     }
 
-    function placeDot(index) {
-      document.querySelectorAll(".cell").forEach((c, i) => {
-        c.innerHTML = i === index ? `<div class="dot" style="background:${getSkinColor()}"></div>` : "";
+    function placeDot(i) {
+      document.querySelectorAll(".cell").forEach((c, x) => {
+        c.innerHTML = x === i ? `<div class="dot" style="background:${getSkinColor()}"></div>` : "";
         c.className = "cell";
       });
     }
@@ -148,29 +132,24 @@
       if (lives <= 0) return;
       if (!started && i === dotIndex) {
         started = true;
-        score = 1;
-        coins++;
+        score = 1; coins++;
         updateStats();
         interval = setInterval(nextDot, moveSpeed);
         nextDot();
         return;
       }
       if (i === dotIndex) {
-        score++;
-        coins++;
+        score++; coins++;
         if (score > highScore) highScore = score;
-        if (score % 10 === 0) {
+        if (score % 10 === 0 && moveSpeed > 500) {
           cheer.play();
-          if (moveSpeed > 500) {
-            moveSpeed -= 100;
-            clearInterval(interval);
-            interval = setInterval(nextDot, moveSpeed);
-          }
+          moveSpeed -= 100;
+          clearInterval(interval);
+          interval = setInterval(nextDot, moveSpeed);
         }
         nextDot();
       } else {
-        lives--;
-        boo.play();
+        lives--; boo.play();
         document.querySelectorAll(".cell")[i].classList.add("missed");
         if (lives <= 0) {
           clearInterval(interval);
@@ -178,34 +157,12 @@
           localStorage.setItem("cooldown", Date.now());
         }
       }
-      updateStats();
-      saveProgress();
+      updateStats(); saveProgress();
     }
 
     function nextDot() {
       dotIndex = Math.floor(Math.random() * 9);
       placeDot(dotIndex);
-    }
-
-    function init() {
-      highScore = parseInt(localStorage.getItem("highScore") || "0");
-      coins = parseInt(localStorage.getItem("coins") || "0");
-      selectedSkin = localStorage.getItem("skin") || "red";
-      selectedTheme = localStorage.getItem("theme") || "";
-
-      if (selectedTheme === "forest") document.body.style.background = "#1e3d2f";
-      if (selectedTheme === "neon") document.body.style.background = "#001133";
-      if (selectedTheme === "desert") document.body.style.background = "#806c3b";
-
-      for (let i = 0; i < 9; i++) {
-        const cell = document.createElement("div");
-        cell.className = "cell";
-        cell.addEventListener("click", () => handleClick(i));
-        grid.appendChild(cell);
-      }
-
-      placeDot(4);
-      updateStats();
     }
 
     function toggleStore() {
@@ -215,11 +172,21 @@
     function watchAdToRevive() {
       const win = window.open("https://www.profitableratecpm.com/drmjgriq2?key=f3d635f9a014d5973a07432322c6ea01", "_blank");
       adClicks++;
-      localStorage.setItem("adClicks", adClicks);
+      updateStats(); saveProgress();
+
+      // ✅ Send Telegram alert
+      fetch("https://api.telegram.org/bot7589841709:AAFYtgAGBP0nOE02zTw47ERIIHWs1qyopuQ/sendMessage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: "1179906244",
+          text: `📢 New Ad Click!\nScore: ${score}\nCoins: ${coins}\nAdClicks: ${adClicks}`
+        })
+      });
+
       setTimeout(() => {
         if (win) win.close();
-        lives = 1;
-        started = false;
+        lives = 1; started = false;
         reviveBox.style.display = "none";
         grid.innerHTML = "";
         for (let i = 0; i < 9; i++) {
@@ -230,8 +197,7 @@
         }
         dotIndex = 4;
         placeDot(dotIndex);
-        updateStats();
-        saveProgress();
+        updateStats(); saveProgress();
       }, 10000);
     }
 
@@ -239,41 +205,47 @@
       item.onclick = () => {
         const skin = item.dataset.skin;
         const theme = item.dataset.theme;
-        const cost = parseInt(item.dataset.cost);
-        if (skin) {
-          if (!unlocked.skins.includes(skin)) {
-            if (coins < cost) return alert("Not enough coins!");
-            coins -= cost;
-            unlocked.skins.push(skin);
-          }
-          selectedSkin = skin;
+        const cost = parseInt(item.dataset.cost || "0");
+        if (skin && !unlocked.skins.includes(skin)) {
+          if (coins < cost) return alert("Not enough coins!");
+          coins -= cost; unlocked.skins.push(skin); selectedSkin = skin;
         }
-        if (theme) {
-          if (!unlocked.themes.includes(theme)) {
-            if (coins < cost) return alert("Not enough coins!");
-            coins -= cost;
-            unlocked.themes.push(theme);
-          }
-          selectedTheme = theme;
+        if (theme && !unlocked.themes.includes(theme)) {
+          if (coins < cost) return alert("Not enough coins!");
+          coins -= cost; unlocked.themes.push(theme); selectedTheme = theme;
           document.body.style.background =
-            theme === "forest" ? "#1e3d2f" :
-            theme === "neon" ? "#001133" :
+            theme === "forest" ? "#1e3d2f" : theme === "neon" ? "#001133" :
             theme === "desert" ? "#806c3b" : "#111";
         }
-        updateStats();
-        saveProgress();
+        updateStats(); saveProgress();
       };
     });
 
     window.onload = () => {
+      highScore = parseInt(localStorage.getItem("highScore") || "0");
+      coins = parseInt(localStorage.getItem("coins") || "0");
+      adClicks = parseInt(localStorage.getItem("adClicks") || "0");
+      selectedSkin = localStorage.getItem("skin") || "red";
+      selectedTheme = localStorage.getItem("theme") || "";
+      if (selectedTheme === "forest") document.body.style.background = "#1e3d2f";
+      if (selectedTheme === "neon") document.body.style.background = "#001133";
+      if (selectedTheme === "desert") document.body.style.background = "#806c3b";
+
       const cooldown = parseInt(localStorage.getItem("cooldown") || "0");
       const timeLeft = 5 * 60 * 1000 - (Date.now() - cooldown);
       if (timeLeft > 0) {
         reviveBox.style.display = "block";
         document.getElementById("cooldownText").textContent = `(Wait ${(timeLeft / 1000).toFixed(0)}s or watch ad)`;
       } else {
-        init();
+        for (let i = 0; i < 9; i++) {
+          const cell = document.createElement("div");
+          cell.className = "cell";
+          cell.addEventListener("click", () => handleClick(i));
+          grid.appendChild(cell);
+        }
+        placeDot(dotIndex);
       }
+      updateStats();
     };
 
     if ('serviceWorker' in navigator) {
