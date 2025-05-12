@@ -12,7 +12,6 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      margin: 0;
       padding: 20px;
     }
     h1 {
@@ -20,184 +19,186 @@
     }
     #info {
       margin: 10px 0;
-      font-size: 1rem;
     }
     #grid {
       display: grid;
       grid-template-columns: repeat(3, 100px);
       grid-template-rows: repeat(3, 100px);
       gap: 10px;
-      margin: 20px 0;
     }
     .cell {
       width: 100px;
       height: 100px;
-      background: #333;
+      background: #2b2b2b;
       border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: background 0.3s;
-    }
-    .dot {
-      width: 30px;
-      height: 30px;
-      background: radial-gradient(circle at 30% 30%, #ff3c3c, #990000);
-      border-radius: 50%;
-    }
-    .hit {
-      background: #2ecc71 !important;
-    }
-    .miss {
-      background: #c0392b !important;
-    }
-    #download {
-      margin-top: 25px;
-    }
-    #download button {
-      background: #333;
-      color: white;
-      padding: 10px 16px;
-      border: none;
-      border-radius: 5px;
-      font-size: 1rem;
       cursor: pointer;
     }
-    #download button:hover {
-      background: #555;
+    .dot {
+      width: 40px;
+      height: 40px;
+      background: #ff4668;
+      border-radius: 50%;
+    }
+    #game-over {
+      display: none;
+      background: rgba(0,0,0,0.8);
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      margin-top: 20px;
+    }
+    #bottom-ad {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      background: #000;
+      text-align: center;
+      padding: 10px;
+      z-index: 99;
+    }
+    #pauseBtn {
+      margin-top: 10px;
     }
   </style>
 </head>
 <body>
   <h1>🎯 Chasing Dot</h1>
-
   <div id="info">
-    ⏱ Time: <span id="time">0s</span> |
-    🌟 Score: <span id="score">0</span> |
-    🏆 High Score: <span id="highScore">0</span> |
-    ❤️ Lives: <span id="lives">3</span>
+    ⏱ Time: <span id="time">0</span>s | 💯 Score: <span id="score">0</span> | 🏅 High Score: <span id="highscore">0</span> | ❤️ Lives: <span id="lives">3</span>
   </div>
-
+  <button id="pauseBtn">⏸️ Pause</button>
   <div id="grid"></div>
-
-  <div id="download">
-    <button onclick="window.open('https://example.com/download.zip')">📱 Download Game</button>
-    <button onclick="togglePause()">⏸️ Pause</button>
+  <div id="game-over">
+    <h2>Game Over</h2>
+    <p>⏳ Wait <span id="cooldown">300</span>s or</p>
+    <button onclick="watchAd()">▶️ Watch Ad to Revive</button>
+    <br/><br/>
+    <button onclick="startGame()">🔄 Restart</button>
   </div>
-
-  <audio id="bgMusic" src="sounds/bg.mp3" loop preload="auto"></audio>
-  <audio id="failSound" src="sounds/fail.mp3" preload="auto"></audio>
-  <audio id="cheerSound" src="sounds/cheer.mp3" preload="auto"></audio>
+  <div id="bottom-ad">
+    <iframe src="https://www.profitableratecpm.com/drmjgriq2?key=f3d635f9a014d5973a07432322c6ea01" width="320" height="50" frameborder="0"></iframe>
+  </div>
 
   <script>
-    const grid = document.getElementById("grid");
-    const timeDisplay = document.getElementById("time");
-    const scoreDisplay = document.getElementById("score");
-    const highScoreDisplay = document.getElementById("highScore");
-    const livesDisplay = document.getElementById("lives");
-
-    const bgMusic = document.getElementById("bgMusic");
-    const failSound = document.getElementById("failSound");
-    const cheerSound = document.getElementById("cheerSound");
+    const grid = document.getElementById('grid');
+    const timeEl = document.getElementById('time');
+    const scoreEl = document.getElementById('score');
+    const livesEl = document.getElementById('lives');
+    const highscoreEl = document.getElementById('highscore');
+    const gameOver = document.getElementById('game-over');
+    const cooldownEl = document.getElementById('cooldown');
+    const pauseBtn = document.getElementById('pauseBtn');
 
     let score = 0;
-    let highScore = 0;
-    let time = 0;
+    let highscore = localStorage.getItem('highscore') || 0;
     let lives = 3;
-    let timer;
-    let moveInterval;
-    let gameStarted = false;
-    let currentDot;
-    let gameSpeed = 1000;
+    let time = 0;
+    let interval, moveSpeed = 1000;
     let paused = false;
+    let currentDot = 4; // center
+    let cooldownTimer = null;
+
+    highscoreEl.textContent = highscore;
 
     for (let i = 0; i < 9; i++) {
-      const cell = document.createElement("div");
-      cell.classList.add("cell");
+      const cell = document.createElement('div');
+      cell.classList.add('cell');
       cell.dataset.index = i;
+      cell.onclick = () => handleClick(i);
       grid.appendChild(cell);
     }
 
-    function startGame() {
-      if (gameStarted) return;
-      gameStarted = true;
-      time = 0;
-      score = 0;
-      lives = 3;
-      scoreDisplay.textContent = score;
-      livesDisplay.textContent = lives;
-      timeDisplay.textContent = "0s";
-      timer = setInterval(() => {
-        time++;
-        timeDisplay.textContent = `${time}s`;
-      }, 1000);
-      moveDot();
-      moveInterval = setInterval(moveDot, gameSpeed);
-      bgMusic.volume = 0.3;
-      bgMusic.play().catch(() => {});
+    function placeDot(index) {
+      [...grid.children].forEach(c => c.innerHTML = '');
+      const dot = document.createElement('div');
+      dot.classList.add('dot');
+      grid.children[index].appendChild(dot);
+    }
+
+    function handleClick(index) {
+      if (paused || lives <= 0) return;
+      if (index == currentDot) {
+        score++;
+        scoreEl.textContent = score;
+        if (score > highscore) {
+          highscore = score;
+          highscoreEl.textContent = highscore;
+          localStorage.setItem('highscore', highscore);
+        }
+        if (score % 10 === 0) moveSpeed *= 0.9;
+        moveDot();
+      } else {
+        lives--;
+        livesEl.textContent = lives;
+        if (lives <= 0) triggerGameOver();
+      }
     }
 
     function moveDot() {
-      if (paused) return;
-      const cells = document.querySelectorAll(".cell");
-      cells.forEach(cell => {
-        cell.innerHTML = "";
-        cell.classList.remove("hit", "miss");
-      });
-      const index = Math.floor(Math.random() * 9);
-      currentDot = index;
-      const dot = document.createElement("div");
-      dot.classList.add("dot");
-      cells[index].appendChild(dot);
+      clearInterval(interval);
+      interval = setInterval(() => {
+        if (!paused) {
+          let next;
+          do {
+            next = Math.floor(Math.random() * 9);
+          } while (next === currentDot);
+          currentDot = next;
+          placeDot(currentDot);
+        }
+      }, moveSpeed);
     }
 
-    grid.addEventListener("click", (e) => {
-      if (paused) return;
-      const cell = e.target.closest(".cell");
-      if (!cell) return;
-      const clickedIndex = parseInt(cell.dataset.index);
-
-      if (!gameStarted) {
-        startGame();
-      }
-
-      if (clickedIndex === currentDot) {
-        score++;
-        scoreDisplay.textContent = score;
-        if (score % 10 === 0) {
-          cheerSound.play();
-          gameSpeed = Math.max(200, gameSpeed - 100);
-          clearInterval(moveInterval);
-          moveInterval = setInterval(moveDot, gameSpeed);
-        }
-        if (score > highScore) {
-          highScore = score;
-          highScoreDisplay.textContent = highScore;
-        }
-        cell.classList.add("hit");
-        currentDot = null;
-      } else {
-        failSound.play();
-        cell.classList.add("miss");
-        lives--;
-        livesDisplay.textContent = lives;
-        if (lives <= 0) {
-          stopGame();
-        }
-      }
-    });
-
-    function stopGame() {
-      clearInterval(timer);
-      clearInterval(moveInterval);
-      gameStarted = false;
-      paused = false;
-      alert("Game Over! Your score: " + score);
+    function startGame() {
+      score = 0; lives = 3; time = 0; moveSpeed = 1000;
+      scoreEl.textContent = 0;
+      livesEl.textContent = 3;
+      timeEl.textContent = 0;
+      gameOver.style.display = 'none';
+      currentDot = 4;
+      placeDot(currentDot);
+      clearInterval(interval);
+      moveDot();
+      timerStart();
     }
 
-    function togglePause() {
-      paused = !paused;
+    function timerStart() {
+      clearInterval(cooldownTimer);
+      setInterval(() => {
+        if (!paused && lives > 0) timeEl.textContent = ++time;
+      }, 1000);
     }
+
+    function triggerGameOver() {
+      clearInterval(interval);
+      gameOver.style.display = 'block';
+      let cooldown = 300;
+      cooldownEl.textContent = cooldown;
+      cooldownTimer = setInterval(() => {
+        cooldown--;
+        cooldownEl.textContent = cooldown;
+        if (cooldown <= 0) {
+          clearInterval(cooldownTimer);
+          lives = 3;
+          livesEl.textContent = 3;
+          gameOver.style.display = 'none';
+          startGame();
+        }
+      }, 1000);
+    }
+
+    function watchAd() {
+      window.open("https://www.profitableratecpm.com/drmjgriq2?key=f3d635f9a014d5973a07432322c6ea01", '_blank');
+      lives = 1;
+      livesEl.textContent = 1;
+      gameOver.style.display = 'none';
+      moveDot();
+    }
+
+    pauseBtn.onclick = () => paused = !paused;
+    startGame();
   </script>
 </body>
 </html>
