@@ -209,16 +209,29 @@
     }
 
     function watchAdToRevive() {
-      const win = window.open("https://www.profitableratecpm.com/drmjgriq2?key=f3d635f9a014d5973a07432322c6ea01", "_blank");
-      setTimeout(() => {
-        if (win) win.close();
-        lives = 1;
-        started = true;
-        reviveBox.style.display = "none";
-        updateStats();
-        interval = setInterval(nextDot, moveSpeed);
-      }, 10000);
+  const win = window.open("https://www.profitableratecpm.com/drmjgriq2?key=f3d635f9a014d5973a07432322c6ea01", "_blank");
+  setTimeout(() => {
+    if (win) win.close();
+    lives = 1;
+    started = false;
+    reviveBox.style.display = "none";
+    
+    // Clear old grid and re-render it
+    grid.innerHTML = "";
+    for (let i = 0; i < 9; i++) {
+      const cell = document.createElement("div");
+      cell.className = "cell";
+      cell.addEventListener("click", () => handleClick(i));
+      grid.appendChild(cell);
     }
+
+    dotIndex = 4;
+    placeDot(dotIndex);
+    updateStats();
+    saveProgress();
+  }, 10000);
+}
+
 
     document.querySelectorAll(".storeitem").forEach(item => {
       item.onclick = () => {
