@@ -60,8 +60,16 @@
       z-index: 99;
     }
     #pauseBtn {
-      margin-top: 10px;
-    }
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #444;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
   </style>
 </head>
 <body>
@@ -119,15 +127,28 @@
     }
 
     function handleClick(index) {
-      if (paused || lives <= 0) return;
-      if (index == currentDot) {
-        score++;
-        scoreEl.textContent = score;
-        if (score > highscore) {
-          highscore = score;
-          highscoreEl.textContent = highscore;
-          localStorage.setItem('highscore', highscore);
-        }
+  if (paused || lives <= 0 || cooldownActive) return;
+  const cell = grid.children[index];
+  if (index === currentDot) {
+    score++;
+    scoreEl.textContent = score;
+    if (score > highscore) {
+      highscore = score;
+      highscoreEl.textContent = highscore;
+      localStorage.setItem('highscore', highscore);
+    }
+    if (score % 10 === 0) moveSpeed *= 0.9;
+    moveDot();
+  } else {
+    const audio = new Audio('sounds/fail.mp3');
+    audio.play();
+    cell.style.background = '#c0392b';
+    setTimeout(() => cell.style.background = '', 500);
+    lives--;
+    livesEl.textContent = lives;
+    if (lives <= 0) triggerGameOver();
+  }
+}
         if (score % 10 === 0) moveSpeed *= 0.9;
         moveDot();
       } else {
@@ -152,17 +173,18 @@
     }
 
     function startGame() {
-      score = 0; lives = 3; time = 0; moveSpeed = 1000;
-      scoreEl.textContent = 0;
-      livesEl.textContent = 3;
-      timeEl.textContent = 0;
-      gameOver.style.display = 'none';
-      currentDot = 4;
-      placeDot(currentDot);
-      clearInterval(interval);
-      moveDot();
-      timerStart();
-    }
+  if (cooldownActive) return;
+  score = 0; lives = 3; time = 0; moveSpeed = 1000;
+  scoreEl.textContent = 0;
+  livesEl.textContent = 3;
+  timeEl.textContent = 0;
+  gameOver.style.display = 'none';
+  currentDot = 4;
+  placeDot(currentDot);
+  clearInterval(interval);
+  moveDot();
+  timerStart();
+}
 
     function timerStart() {
       clearInterval(cooldownTimer);
@@ -171,21 +193,27 @@
       }, 1000);
     }
 
-    function triggerGameOver() {
-      clearInterval(interval);
-      gameOver.style.display = 'block';
-      let cooldown = 300;
-      cooldownEl.textContent = cooldown;
-      cooldownTimer = setInterval(() => {
-        cooldown--;
-        cooldownEl.textContent = cooldown;
-        if (cooldown <= 0) {
-          clearInterval(cooldownTimer);
-          lives = 3;
-          livesEl.textContent = 3;
-          gameOver.style.display = 'none';
-          startGame();
-        }
+    let cooldownActive = false;
+
+function triggerGameOver() {
+  clearInterval(interval);
+  gameOver.style.display = 'block';
+  cooldownActive = true;
+  let cooldown = 300;
+  cooldownEl.textContent = cooldown;
+  cooldownTimer = setInterval(() => {
+    cooldown--;
+    cooldownEl.textContent = cooldown;
+    if (cooldown <= 0) {
+      clearInterval(cooldownTimer);
+      cooldownActive = false;
+      lives = 3;
+      livesEl.textContent = 3;
+      gameOver.style.display = 'none';
+      startGame();
+    }
+  }, 1000);
+}
       }, 1000);
     }
 
