@@ -78,109 +78,43 @@
   <audio id="boo" src="sounds/boo.mp3"></audio>
   <iframe id="ad" src="https://www.profitableratecpm.com/drmjgriq2?key=f3d635f9a014d5973a07432322c6ea01"></iframe>
 
-  <script>
-    const grid = document.getElementById("grid"),
-      scoreEl = document.getElementById("score"),
-      livesEl = document.getElementById("lives"),
-      highScoreEl = document.getElementById("highScore"),
-      coinsEl = document.getElementById("coins"),
-      bgMusic = document.getElementById("bgMusic"),
-      cheer = document.getElementById("cheer"),
-      boo = document.getElementById("boo");
+  document.querySelectorAll(".storeItem").forEach(item => {
+  item.onclick = () => {
+    const skin = item.dataset.skin;
+    const theme = item.dataset.theme;
+    const cost = parseInt(item.dataset.cost || "0");
 
-    let score = 0, lives = 3, highScore = 0, dotIndex = 4,
-        started = false, musicStarted = false, moveSpeed = 1500, interval,
-        coins = 0, cells = [],
-        unlocked = JSON.parse(localStorage.getItem("unlocked")) || { skins: ["red"], themes: [] },
-        selectedSkin = localStorage.getItem("skin") || "red",
-        selectedTheme = localStorage.getItem("theme") || "";
-
-    if (selectedTheme === "forest") document.documentElement.style.setProperty("--bgColor", "#1e3d2f");
-    if (selectedTheme === "neon") document.documentElement.style.setProperty("--bgColor", "#001133");
-    if (selectedTheme === "desert") document.documentElement.style.setProperty("--bgColor", "#806c3b");
-
-    function saveProgress() {
-      localStorage.setItem("highScore", highScore);
-      localStorage.setItem("coins", coins);
-      localStorage.setItem("skin", selectedSkin);
-      localStorage.setItem("theme", selectedTheme);
-      localStorage.setItem("unlocked", JSON.stringify(unlocked));
-    }
-
-    function placeDot(index) {
-      cells.forEach(c => c.innerHTML = "");
-      const dot = document.createElement("div");
-      dot.className = "dot";
-      dot.style.background =
-        selectedSkin === "rainbow" ? "linear-gradient(45deg, red, orange, yellow, green, blue)" :
-        selectedSkin === "dog" ? "#c89f77" : selectedSkin;
-      grid.children[index].appendChild(dot);
-    }
-
-    function toggleStore() {
-      const panel = document.getElementById("storePanel");
-      panel.style.display = panel.style.display === "none" ? "block" : "none";
-    }
-
-    function handleClick(i) {
-      if (!musicStarted) {
-        bgMusic.volume = 0.5;
-        bgMusic.play().catch(() => {});
-        musicStarted = true;
+    if (skin) {
+      if (!unlocked.skins.includes(skin)) {
+        if (coins >= cost) {
+          coins -= cost;
+          unlocked.skins.push(skin);
+          item.classList.remove("locked"); // ✅ Unlock
+        } else return alert("Not enough coins!");
       }
-      if (lives <= 0) return;
-
-      if (!started) {
-        if (i === dotIndex) {
-          started = true;
-          score = 1;
-          coins++;
-          updateStats();
-          dotIndex = Math.floor(Math.random() * 9);
-          placeDot(dotIndex);
-          interval = setInterval(() => {
-            dotIndex = Math.floor(Math.random() * 9);
-            placeDot(dotIndex);
-          }, moveSpeed);
-        } else {
-          lives--;
-          boo.play();
-          grid.children[i].classList.add("missed");
-          setTimeout(() => grid.children[i].classList.remove("missed"), 300);
-          updateStats();
-        }
-        return;
-      }
-
-      if (i === dotIndex) {
-        score++;
-        if (score > highScore) highScore = score;
-        if (score % 10 === 0) {
-          coins++;
-          cheer.play();
-          if (moveSpeed > 500) moveSpeed -= 100; // SLOW TO FAST transition
-          clearInterval(interval);
-          interval = setInterval(() => {
-            dotIndex = Math.floor(Math.random() * 9);
-            placeDot(dotIndex);
-          }, moveSpeed);
-        }
-        updateStats();
-        dotIndex = Math.floor(Math.random() * 9);
-        placeDot(dotIndex);
-      } else {
-        lives--;
-        boo.play();
-        grid.children[i].classList.add("missed");
-        setTimeout(() => grid.children[i].classList.remove("missed"), 300);
-        updateStats();
-        if (lives <= 0) {
-          clearInterval(interval);
-          document.getElementById("reviveBox").style.display = "block";
-        }
-      }
-      saveProgress();
+      selectedSkin = skin;
     }
+
+    if (theme) {
+      if (!unlocked.themes.includes(theme)) {
+        if (coins >= cost) {
+          coins -= cost;
+          unlocked.themes.push(theme);
+          item.classList.remove("locked"); // ✅ Unlock
+        } else return alert("Not enough coins!");
+      }
+      selectedTheme = theme;
+      document.documentElement.style.setProperty("--bgColor",
+        theme === "forest" ? "#1e3d2f" :
+        theme === "neon" ? "#001133" :
+        theme === "desert" ? "#806c3b" : "#111");
+    }
+
+    updateStats();
+    saveProgress();
+  };
+});
+
 
     function updateStats() {
       scoreEl.textContent = score;
