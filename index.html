@@ -2,89 +2,53 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Chasing Dot</title>
   <link rel="manifest" href="manifest.json" />
   <style>
-    :root {
-      --ballColor: red;
-      --bgColor: #111;
-    }
+    :root { --ballColor: red; --bgColor: #111; }
     body {
-      background: var(--bgColor);
-      color: white;
+      background: var(--bgColor); color: white;
       font-family: Arial, sans-serif;
-      padding-top: 60px;
-      text-align: center;
-      margin: 0;
+      padding: 60px 10px 90px; text-align: center; margin: 0;
     }
     #downloadBtn {
-      position: fixed;
-      top: 10px;
-      left: 10px;
-      background: #007bff;
-      color: white;
-      border: none;
-      padding: 8px 12px;
-      border-radius: 5px;
-      cursor: pointer;
+      position: fixed; top: 10px; left: 10px;
+      background: #007bff; color: white;
+      border: none; padding: 8px 12px;
+      border-radius: 5px; cursor: pointer;
     }
     #grid {
       display: grid;
       grid-template-columns: repeat(3, 100px);
-      gap: 10px;
-      justify-content: center;
+      gap: 10px; justify-content: center;
       margin: 20px auto;
     }
     .cell {
-      background: #333;
-      width: 100px;
-      height: 100px;
-      border-radius: 8px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      background: #333; width: 100px; height: 100px;
+      border-radius: 8px; display: flex;
+      justify-content: center; align-items: center;
       cursor: pointer;
     }
     .dot {
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
+      width: 50px; height: 50px; border-radius: 50%;
       background: var(--ballColor);
     }
     .missed { background: darkred !important; }
-    #storeBtn {
-      margin: 10px auto;
-      padding: 8px 14px;
-      background: green;
-      border: none;
-      color: white;
-      font-weight: bold;
-      border-radius: 5px;
-      cursor: pointer;
-    }
     #storePanel {
-      background: #222;
-      padding: 15px;
-      margin: 20px auto;
-      border-radius: 10px;
-      max-width: 360px;
-      display: none;
+      background: #222; padding: 15px;
+      border-radius: 10px; max-width: 340px;
+      margin: 0 auto 20px; display: none;
     }
     .storeItem {
-      margin: 10px 0;
-      padding: 8px;
-      background: #333;
-      border-radius: 8px;
+      margin: 10px 0; padding: 8px;
+      background: #333; border-radius: 8px;
+      cursor: pointer;
     }
     .locked { opacity: 0.6; }
     iframe#ad {
-      position: fixed;
-      bottom: 0;
-      width: 100%;
-      height: 60px;
-      border: none;
-      z-index: 999;
+      position: fixed; bottom: 0; width: 100%;
+      height: 60px; border: none; z-index: 999;
     }
   </style>
 </head>
@@ -99,22 +63,22 @@
   </div>
 
   <div id="grid"></div>
-
-  <button id="storeBtn" onclick="toggleStore()">🛒 Open Store</button>
+  <button onclick="document.getElementById('storePanel').style.display = 'block'">🛒 Open Store</button>
 
   <div id="storePanel">
     <h3>🎨 Skins</h3>
     <div class="storeItem" data-skin="red">🔴 Red - Free</div>
     <div class="storeItem locked" data-skin="dog" data-cost="10">🐶 Dog - 10 coins</div>
     <div class="storeItem locked" data-skin="rainbow" data-cost="15">🌈 Rainbow - 15 coins</div>
-    <h3>🎨 Themes</h3>
+
+    <h3>🖼️ Themes</h3>
     <div class="storeItem locked" data-theme="forest" data-cost="10">🌲 Forest - 10 coins</div>
     <div class="storeItem locked" data-theme="neon" data-cost="15">💡 Neon - 15 coins</div>
     <div class="storeItem locked" data-theme="desert" data-cost="20">🏜 Desert - 20 coins</div>
   </div>
 
-  <div id="reviveBox" style="display:none; margin:20px;">
-    <p>💀 Out of lives! Watch ad to revive?</p>
+  <div id="reviveBox" style="display:none;">
+    <p>💀 You’re out of lives! Watch an ad to revive?</p>
     <button onclick="watchAdToRevive()">▶️ Watch Ad</button>
   </div>
 
@@ -158,63 +122,63 @@
       cells.forEach(c => c.innerHTML = "");
       const dot = document.createElement("div");
       dot.className = "dot";
-      dot.style.background = selectedSkin === "rainbow" ? "linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet)" : selectedSkin === "dog" ? "#c89f77" : selectedSkin;
+      dot.style.background = selectedSkin === "rainbow"
+        ? "linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet)"
+        : selectedSkin === "dog" ? "#c89f77" : selectedSkin;
       grid.children[index].appendChild(dot);
     }
 
-   function handleClick(i) {
-  if (!musicStarted) {
-    bgMusic.volume = 0.5;
-    bgMusic.play().catch(() => {});
-    musicStarted = true;
-  }
-  if (lives <= 0) return;
+    function handleClick(i) {
+      if (!musicStarted) {
+        bgMusic.volume = 0.5;
+        bgMusic.play().catch(() => {});
+        musicStarted = true;
+      }
+      if (lives <= 0) return;
 
-  if (!started) {
-    if (i === dotIndex) {
-      started = true;
-      score = 1;
-      coins++;
-      updateStats();
-      placeDot(Math.floor(Math.random() * 9));
-      interval = setInterval(() => placeDot(Math.floor(Math.random() * 9)), moveSpeed);
-    } else {
-      // wrong cell at game start
-      lives--;
-      boo.play();
-      grid.children[i].classList.add("missed");
-      setTimeout(() => grid.children[i].classList.remove("missed"), 300);
-      updateStats();
-    }
-    return;
-  }
+      if (!started) {
+        if (i === dotIndex) {
+          started = true;
+          score = 1;
+          coins++;
+          updateStats();
+          placeDot(Math.floor(Math.random() * 9));
+          interval = setInterval(() => placeDot(Math.floor(Math.random() * 9)), moveSpeed);
+        } else {
+          lives--;
+          boo.play();
+          grid.children[i].classList.add("missed");
+          setTimeout(() => grid.children[i].classList.remove("missed"), 300);
+          updateStats();
+        }
+        return;
+      }
 
-  if (i === dotIndex) {
-    score++;
-    if (score > highScore) highScore = score;
-    if (score % 10 === 0) {
-      coins++;
-      cheer.play();
-      if (moveSpeed > 200) moveSpeed -= 100;
-      clearInterval(interval);
-      interval = setInterval(() => placeDot(Math.floor(Math.random() * 9)), moveSpeed);
+      if (i === dotIndex) {
+        score++;
+        if (score > highScore) highScore = score;
+        if (score % 10 === 0) {
+          coins++;
+          cheer.play();
+          if (moveSpeed > 200) moveSpeed -= 100;
+          clearInterval(interval);
+          interval = setInterval(() => placeDot(Math.floor(Math.random() * 9)), moveSpeed);
+        }
+        updateStats();
+        placeDot(Math.floor(Math.random() * 9));
+      } else {
+        lives--;
+        boo.play();
+        grid.children[i].classList.add("missed");
+        setTimeout(() => grid.children[i].classList.remove("missed"), 300);
+        updateStats();
+        if (lives <= 0) {
+          clearInterval(interval);
+          document.getElementById("reviveBox").style.display = "block";
+        }
+      }
+      saveProgress();
     }
-    updateStats();
-    placeDot(Math.floor(Math.random() * 9));
-  } else {
-    lives--;
-    boo.play();
-    grid.children[i].classList.add("missed");
-    setTimeout(() => grid.children[i].classList.remove("missed"), 300);
-    updateStats();
-    if (lives <= 0) {
-      clearInterval(interval);
-      document.getElementById("reviveBox").style.display = "block";
-    }
-  }
-  saveProgress();
-}
-
 
     function updateStats() {
       scoreEl.textContent = score;
@@ -223,18 +187,14 @@
       coinsEl.textContent = coins;
     }
 
-    function toggleStore() {
-      document.getElementById("storePanel").style.display ^= "block";
-    }
-
     function watchAdToRevive() {
       const win = window.open("https://www.profitableratecpm.com/drmjgriq2?key=f3d635f9a014d5973a07432322c6ea01", "_blank");
       setTimeout(() => {
         if (win) win.close();
         lives = 1;
-        updateStats();
         document.getElementById("reviveBox").style.display = "none";
         interval = setInterval(() => placeDot(Math.floor(Math.random() * 9)), moveSpeed);
+        updateStats();
       }, 10000);
     }
 
