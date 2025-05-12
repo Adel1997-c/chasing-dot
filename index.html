@@ -8,27 +8,20 @@
   <style>
     :root { --ballColor: red; --bgColor: #111; }
     body {
-      background: var(--bgColor); color: white;
-      font-family: Arial, sans-serif;
+      background: var(--bgColor); color: white; font-family: Arial, sans-serif;
       padding: 60px 10px 90px; text-align: center; margin: 0;
     }
     #downloadBtn {
-      position: fixed; top: 10px; left: 10px;
-      background: #007bff; color: white;
-      border: none; padding: 8px 12px;
-      border-radius: 5px; cursor: pointer;
+      position: fixed; top: 10px; left: 10px; background: #007bff; color: white;
+      border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer;
     }
     #grid {
-      display: grid;
-      grid-template-columns: repeat(3, 100px);
-      gap: 10px; justify-content: center;
-      margin: 20px auto;
+      display: grid; grid-template-columns: repeat(3, 100px); gap: 10px;
+      justify-content: center; margin: 20px auto;
     }
     .cell {
-      background: #333; width: 100px; height: 100px;
-      border-radius: 8px; display: flex;
-      justify-content: center; align-items: center;
-      cursor: pointer;
+      background: #333; width: 100px; height: 100px; border-radius: 8px;
+      display: flex; justify-content: center; align-items: center; cursor: pointer;
     }
     .dot {
       width: 50px; height: 50px; border-radius: 50%;
@@ -36,14 +29,12 @@
     }
     .missed { background: darkred !important; }
     #storePanel {
-      background: #222; padding: 15px;
-      border-radius: 10px; max-width: 340px;
-      margin: 0 auto 20px; display: none;
+      background: #222; padding: 15px; border-radius: 10px;
+      max-width: 360px; margin: 0 auto 20px; display: none;
     }
     .storeItem {
-      margin: 10px 0; padding: 8px;
-      background: #333; border-radius: 8px;
-      cursor: pointer;
+      margin: 10px 0; padding: 8px; background: #333;
+      border-radius: 8px; cursor: pointer;
     }
     .locked { opacity: 0.6; }
     iframe#ad {
@@ -61,54 +52,46 @@
     High Score: <span id="highScore">0</span> |
     🪙 Coins: <span id="coins">0</span>
   </div>
-
   <div id="grid"></div>
-  <button onclick="document.getElementById('storePanel').style.display = 'block'">🛒 Open Store</button>
-
+  <button onclick="toggleStore()">🛒 Open/Close Store</button>
   <div id="storePanel">
     <h3>🎨 Skins</h3>
     <div class="storeItem" data-skin="red">🔴 Red - Free</div>
     <div class="storeItem locked" data-skin="dog" data-cost="10">🐶 Dog - 10 coins</div>
     <div class="storeItem locked" data-skin="rainbow" data-cost="15">🌈 Rainbow - 15 coins</div>
-
     <h3>🖼️ Themes</h3>
     <div class="storeItem locked" data-theme="forest" data-cost="10">🌲 Forest - 10 coins</div>
     <div class="storeItem locked" data-theme="neon" data-cost="15">💡 Neon - 15 coins</div>
     <div class="storeItem locked" data-theme="desert" data-cost="20">🏜 Desert - 20 coins</div>
   </div>
-
   <div id="reviveBox" style="display:none;">
-    <p>💀 You’re out of lives! Watch an ad to revive?</p>
+    <p>💀 You're out of lives! Watch an ad to revive?</p>
     <button onclick="watchAdToRevive()">▶️ Watch Ad</button>
   </div>
-
   <audio id="bgMusic" src="sounds/bg.mp3" loop preload="auto"></audio>
   <audio id="cheer" src="sounds/cheer.mp3"></audio>
   <audio id="boo" src="sounds/boo.mp3"></audio>
-
   <iframe id="ad" src="https://www.profitableratecpm.com/drmjgriq2?key=f3d635f9a014d5973a07432322c6ea01"></iframe>
-
   <script>
-    const grid = document.getElementById("grid");
-    const scoreEl = document.getElementById("score");
-    const livesEl = document.getElementById("lives");
-    const highScoreEl = document.getElementById("highScore");
-    const coinsEl = document.getElementById("coins");
-    const bgMusic = document.getElementById("bgMusic");
-    const cheer = document.getElementById("cheer");
-    const boo = document.getElementById("boo");
+    const grid = document.getElementById("grid"),
+      scoreEl = document.getElementById("score"),
+      livesEl = document.getElementById("lives"),
+      highScoreEl = document.getElementById("highScore"),
+      coinsEl = document.getElementById("coins"),
+      bgMusic = document.getElementById("bgMusic"),
+      cheer = document.getElementById("cheer"),
+      boo = document.getElementById("boo");
 
-    let score = 0, lives = 3, highScore = 0, dotIndex = 4;
-    let started = false, musicStarted = false, moveSpeed = 1000, interval;
-    let coins = 0, unlocked = JSON.parse(localStorage.getItem("unlocked")) || { skins: ["red"], themes: [] };
-    let selectedSkin = localStorage.getItem("skin") || "red";
-    let selectedTheme = localStorage.getItem("theme") || "";
+    let score = 0, lives = 3, highScore = 0, dotIndex = 4,
+        started = false, musicStarted = false, moveSpeed = 1000, interval,
+        coins = 0, cells = [],
+        unlocked = JSON.parse(localStorage.getItem("unlocked")) || { skins: ["red"], themes: [] },
+        selectedSkin = localStorage.getItem("skin") || "red",
+        selectedTheme = localStorage.getItem("theme") || "";
 
     if (selectedTheme === "forest") document.documentElement.style.setProperty("--bgColor", "#1e3d2f");
     if (selectedTheme === "neon") document.documentElement.style.setProperty("--bgColor", "#001133");
     if (selectedTheme === "desert") document.documentElement.style.setProperty("--bgColor", "#806c3b");
-
-    let cells = [];
 
     function saveProgress() {
       localStorage.setItem("highScore", highScore);
@@ -122,13 +105,77 @@
       cells.forEach(c => c.innerHTML = "");
       const dot = document.createElement("div");
       dot.className = "dot";
-      dot.style.background = selectedSkin === "rainbow"
-        ? "linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet)"
-        : selectedSkin === "dog" ? "#c89f77" : selectedSkin;
+      dot.style.background =
+        selectedSkin === "rainbow" ? "linear-gradient(45deg, red, orange, yellow, green, blue)" :
+        selectedSkin === "dog" ? "#c89f77" : selectedSkin;
       grid.children[index].appendChild(dot);
     }
 
-   handleClick
+    function toggleStore() {
+      const panel = document.getElementById("storePanel");
+      panel.style.display = panel.style.display === "none" ? "block" : "none";
+    }
+
+    function handleClick(i) {
+      if (!musicStarted) {
+        bgMusic.volume = 0.5;
+        bgMusic.play().catch(() => {});
+        musicStarted = true;
+      }
+      if (lives <= 0) return;
+
+      if (!started) {
+        if (i === dotIndex) {
+          started = true;
+          score = 1;
+          coins++;
+          updateStats();
+          dotIndex = Math.floor(Math.random() * 9);
+          placeDot(dotIndex);
+          interval = setInterval(() => {
+            dotIndex = Math.floor(Math.random() * 9);
+            placeDot(dotIndex);
+          }, moveSpeed);
+        } else {
+          lives--;
+          boo.play();
+          grid.children[i].classList.add("missed");
+          setTimeout(() => grid.children[i].classList.remove("missed"), 300);
+          updateStats();
+        }
+        return;
+      }
+
+      if (i === dotIndex) {
+        score++;
+        if (score > highScore) highScore = score;
+        if (score % 10 === 0) {
+          coins++;
+          cheer.play();
+          if (moveSpeed > 200) moveSpeed -= 100;
+          clearInterval(interval);
+          interval = setInterval(() => {
+            dotIndex = Math.floor(Math.random() * 9);
+            placeDot(dotIndex);
+          }, moveSpeed);
+        }
+        updateStats();
+        dotIndex = Math.floor(Math.random() * 9);
+        placeDot(dotIndex);
+      } else {
+        lives--;
+        boo.play();
+        grid.children[i].classList.add("missed");
+        setTimeout(() => grid.children[i].classList.remove("missed"), 300);
+        updateStats();
+        if (lives <= 0) {
+          clearInterval(interval);
+          document.getElementById("reviveBox").style.display = "block";
+        }
+      }
+      saveProgress();
+    }
+
     function updateStats() {
       scoreEl.textContent = score;
       livesEl.textContent = lives;
@@ -142,7 +189,10 @@
         if (win) win.close();
         lives = 1;
         document.getElementById("reviveBox").style.display = "none";
-        interval = setInterval(() => placeDot(Math.floor(Math.random() * 9)), moveSpeed);
+        interval = setInterval(() => {
+          dotIndex = Math.floor(Math.random() * 9);
+          placeDot(dotIndex);
+        }, moveSpeed);
         updateStats();
       }, 10000);
     }
@@ -156,30 +206,23 @@
         const skin = item.dataset.skin;
         const theme = item.dataset.theme;
         const cost = parseInt(item.dataset.cost || "0");
-
         if (skin) {
           if (!unlocked.skins.includes(skin)) {
-            if (coins >= cost) {
-              coins -= cost;
-              unlocked.skins.push(skin);
-            } else return alert("Not enough coins!");
+            if (coins >= cost) { coins -= cost; unlocked.skins.push(skin); }
+            else return alert("Not enough coins!");
           }
           selectedSkin = skin;
         }
-
         if (theme) {
           if (!unlocked.themes.includes(theme)) {
-            if (coins >= cost) {
-              coins -= cost;
-              unlocked.themes.push(theme);
-            } else return alert("Not enough coins!");
+            if (coins >= cost) { coins -= cost; unlocked.themes.push(theme); }
+            else return alert("Not enough coins!");
           }
           selectedTheme = theme;
           document.documentElement.style.setProperty("--bgColor",
             theme === "forest" ? "#1e3d2f" : theme === "neon" ? "#001133" : theme === "desert" ? "#806c3b" : "#111");
         }
-        updateStats();
-        saveProgress();
+        updateStats(); saveProgress();
       };
     });
 
@@ -194,7 +237,7 @@
         grid.appendChild(cell);
         cells.push(cell);
       }
-      placeDot(dotIndex);
+      placeDot(dotIndex = 4);
     }
 
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('service-worker.js');
