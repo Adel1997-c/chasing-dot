@@ -35,9 +35,7 @@
       width: 100%;
       height: 100%;
     }
-    .missed {
-      background: red;
-    }
+    .missed { background: red; }
     #store {
       background: #222;
       padding: 10px;
@@ -66,9 +64,9 @@
     <span id="highScore">High Score: 0</span> |
     <span id="coins">🪙 Coins: 0</span>
   </p>
+  <p>📈 Ad Clicks Tracked: <span id="adClicksDisplay">0</span></p>
   <button onclick="toggleStore()">🛍️ Open/Close Store</button>
   <div id="grid"></div>
-
   <div id="store">
     <h3>🎨 Skins</h3>
     <div class="storeitem" data-skin="red" data-cost="0">🔴 Red - Free</div>
@@ -79,17 +77,14 @@
     <div class="storeitem" data-theme="neon" data-cost="15">💡 Neon - 15 coins</div>
     <div class="storeitem" data-theme="desert" data-cost="20">🏜️ Desert - 20 coins</div>
   </div>
-
   <div id="reviveBox" style="display:none;">
     <p>❌ Game Over. <span id="cooldownText"></span></p>
     <button onclick="watchAdToRevive()">❤️ Watch Ad to Revive</button>
   </div>
-
   <audio id="bgMusic" loop src="sounds/bg.mp3"></audio>
   <audio id="cheer" src="sounds/cheer.mp3"></audio>
   <audio id="boo" src="sounds/boo.mp3"></audio>
-  <audio id="fail" src="sounds/fail.mp3"></audio>
-  <audio id="victory" src="sounds/victory.mp3"></audio>
+
   <script>
     const grid = document.getElementById("grid");
     const scoreEl = document.getElementById("score");
@@ -103,6 +98,7 @@
     const bgMusic = document.getElementById("bgMusic");
 
     let score = 0, lives = 3, highScore = 0, coins = 0;
+    let adClicks = parseInt(localStorage.getItem("adClicks") || "0");
     let dotIndex = 4;
     let started = false;
     let moveSpeed = 1500;
@@ -111,11 +107,19 @@
     let selectedTheme = "";
     let unlocked = JSON.parse(localStorage.getItem("unlocked") || '{"skins":["red"],"themes":[]}');
 
+    window.addEventListener('click', () => {
+      if (!bgMusic.played.length) {
+        bgMusic.volume = 0.5;
+        bgMusic.play().catch(() => {});
+      }
+    });
+
     function updateStats() {
       scoreEl.textContent = `Score: ${score}`;
       livesEl.textContent = `Lives: ${lives}`;
       highScoreEl.textContent = `High Score: ${highScore}`;
       coinsEl.textContent = `🪙 Coins: ${coins}`;
+      document.getElementById("adClicksDisplay").textContent = adClicks;
     }
 
     function saveProgress() {
@@ -124,6 +128,7 @@
       localStorage.setItem("unlocked", JSON.stringify(unlocked));
       localStorage.setItem("skin", selectedSkin);
       localStorage.setItem("theme", selectedTheme);
+      localStorage.setItem("adClicks", adClicks);
     }
 
     function placeDot(index) {
@@ -201,7 +206,6 @@
 
       placeDot(4);
       updateStats();
-      bgMusic.play().catch(() => {});
     }
 
     function toggleStore() {
@@ -209,29 +213,27 @@
     }
 
     function watchAdToRevive() {
-  const win = window.open("https://www.profitableratecpm.com/drmjgriq2?key=f3d635f9a014d5973a07432322c6ea01", "_blank");
-  setTimeout(() => {
-    if (win) win.close();
-    lives = 1;
-    started = false;
-    reviveBox.style.display = "none";
-    
-    // Clear old grid and re-render it
-    grid.innerHTML = "";
-    for (let i = 0; i < 9; i++) {
-      const cell = document.createElement("div");
-      cell.className = "cell";
-      cell.addEventListener("click", () => handleClick(i));
-      grid.appendChild(cell);
+      const win = window.open("https://www.profitableratecpm.com/drmjgriq2?key=f3d635f9a014d5973a07432322c6ea01", "_blank");
+      adClicks++;
+      localStorage.setItem("adClicks", adClicks);
+      setTimeout(() => {
+        if (win) win.close();
+        lives = 1;
+        started = false;
+        reviveBox.style.display = "none";
+        grid.innerHTML = "";
+        for (let i = 0; i < 9; i++) {
+          const cell = document.createElement("div");
+          cell.className = "cell";
+          cell.addEventListener("click", () => handleClick(i));
+          grid.appendChild(cell);
+        }
+        dotIndex = 4;
+        placeDot(dotIndex);
+        updateStats();
+        saveProgress();
+      }, 10000);
     }
-
-    dotIndex = 4;
-    placeDot(dotIndex);
-    updateStats();
-    saveProgress();
-  }, 10000);
-}
-
 
     document.querySelectorAll(".storeitem").forEach(item => {
       item.onclick = () => {
