@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Chasing Dot</title>
+  <title>🎯 Chasing Dot</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -12,205 +12,238 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      margin: 0;
+      padding: 20px;
     }
-    h1 {
-      margin-top: 30px;
-    }
-    #info {
-      margin-top: 10px;
-      font-size: 1.2rem;
-    }
+    #info { margin-bottom: 10px; }
     #grid {
       display: grid;
       grid-template-columns: repeat(3, 100px);
       grid-template-rows: repeat(3, 100px);
-      gap: 12px;
-      margin: 30px 0;
+      gap: 10px;
     }
     .cell {
-      width: 100px;
-      height: 100px;
-      background: #2c2c2c;
-      border-radius: 12px;
+      background: #333;
+      border-radius: 10px;
       display: flex;
-      justify-content: center;
       align-items: center;
+      justify-content: center;
       cursor: pointer;
       transition: background 0.3s;
     }
     .dot {
       width: 40px;
       height: 40px;
-      background: radial-gradient(circle at top left, #ff5f6d, #d1345b);
       border-radius: 50%;
+      background: radial-gradient(circle, var(--ballColor, red), #911);
     }
-    #pauseBtn {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      padding: 8px 12px;
-      background: #333;
-      border: none;
-      border-radius: 4px;
-      color: white;
-      cursor: pointer;
-    }
-    #gameOver {
+    .missed { background: darkred !important; }
+    #game-over, #watchAd, #achievements {
+      margin-top: 20px;
+      padding: 10px;
+      background: #222;
+      border-radius: 8px;
       display: none;
-      font-size: 1.2rem;
-      margin-top: 20px;
-      color: #ff6666;
     }
-    #download {
-      background: #2d87f0;
-      color: white;
-      padding: 8px 14px;
-      border: none;
-      border-radius: 6px;
+    #downloadBtn {
       margin-top: 20px;
+      background: dodgerblue;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 5px;
       cursor: pointer;
     }
-    #ad-box {
-      margin-top: 40px;
+    #colorPicker { margin-top: 10px; }
+    #ad-banner {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      text-align: center;
+      background: #000;
     }
   </style>
 </head>
 <body>
-  <h1>🎯 Chasing Dot</h1>
+  <h2>🎯 Chasing Dot</h2>
   <div id="info">
-    ⏱ Time: <span id="time">0</span>s |
+    ⏱ Time: <span id="timer">0s</span> |
     💯 Score: <span id="score">0</span> |
-    🥇 High Score: <span id="highscore">0</span> |
+    🥇 High Score: <span id="highScore">0</span> |
     ❤️ Lives: <span id="lives">3</span>
   </div>
-  <button id="pauseBtn">⏸ Pause</button>
+
   <div id="grid"></div>
-  <div id="gameOver">⛔ Game Over. Cooldown: <span id="cooldown">300</span>s</div>
-  <a id="download" href="./chasing-dot.zip" download>📱 Download Game</a>
-  <div id="ad-box">
-    <iframe src="https://www.profitableratecpm.com/drmjgriq2?key=f3d635f9a014d5973a07432322c6ea01"
-            style="width:100%; height:60px; border:none;" scrolling="no"></iframe>
+
+  <div>
+    🎨 Ball Color:
+    <input type="color" id="colorPicker" value="#ff3355"/>
   </div>
 
+  <div id="game-over">⛔ Game Over. Cooldown: <span id="cooldown">300</span>s</div>
+
+  <div id="watchAd">
+    🎁 Watch ad to revive 1 life<br/>
+    <button onclick="watchAdToRevive()">▶️ Watch Ad</button>
+  </div>
+
+  <button id="downloadBtn">📱 Download Game</button>
+
+  <div id="achievements">
+    <h3>🏆 Achievements</h3>
+    <ul>
+      <li id="a10">🎯 Score 10</li>
+      <li id="a20">🔥 Score 20</li>
+      <li id="a30">💥 Score 30</li>
+      <li id="a40">🚀 Score 40</li>
+    </ul>
+  </div>
+  <button onclick="toggleAchievements()">🏆 Achievements</button>
+
+  <div id="ad-banner">
+    <script type='text/javascript' src='//www.profitableratecpm.com/drmjgriq2?key=f3d635f9a014d5973a07432322c6ea01'></script>
+  </div>
+
+  <!-- Audio -->
+  <audio id="bg" src="sounds/bg.mp3" loop></audio>
+  <audio id="fail" src="sounds/boo.mp3"></audio>
+  <audio id="cheer" src="sounds/cheer.mp3"></audio>
+  <audio id="victory" src="sounds/victory.mp3"></audio>
+
   <script>
-    const grid = document.getElementById('grid');
-    const timeEl = document.getElementById('time');
-    const scoreEl = document.getElementById('score');
-    const highscoreEl = document.getElementById('highscore');
-    const livesEl = document.getElementById('lives');
-    const gameOver = document.getElementById('gameOver');
-    const cooldownEl = document.getElementById('cooldown');
-    const pauseBtn = document.getElementById('pauseBtn');
+    const grid = document.getElementById("grid");
+    const timerEl = document.getElementById("timer");
+    const scoreEl = document.getElementById("score");
+    const highScoreEl = document.getElementById("highScore");
+    const livesEl = document.getElementById("lives");
+    const gameOverEl = document.getElementById("game-over");
+    const watchAdEl = document.getElementById("watchAd");
+    const bgMusic = document.getElementById("bg");
+    const failSound = document.getElementById("fail");
+    const cheerSound = document.getElementById("cheer");
+    const victorySound = document.getElementById("victory");
 
-    let time = 0;
-    let score = 0;
-    let highscore = parseInt(localStorage.getItem('highscore') || '0');
-    let lives = 3;
-    let currentDot = 4;
-    let interval;
-    let moveSpeed = 1000;
-    let paused = false;
-    let cooldownActive = false;
+    let score = 0, highScore = 0, time = 0, lives = 3, dotIndex = 4;
+    let interval, moveSpeed = 1000, isStarted = false;
+    let cooldownTime = 300;
 
-    highscoreEl.textContent = highscore;
-
-    // Create Grid
-    for (let i = 0; i < 9; i++) {
-      const cell = document.createElement('div');
-      cell.classList.add('cell');
-      cell.addEventListener('click', () => handleClick(i));
+    const cells = Array.from({ length: 9 }, (_, i) => {
+      const cell = document.createElement("div");
+      cell.className = "cell";
+      cell.addEventListener("click", () => handleClick(i));
       grid.appendChild(cell);
-    }
+      return cell;
+    });
 
-    function placeDot(index) {
-      document.querySelectorAll('.cell').forEach(c => c.innerHTML = '');
-      const dot = document.createElement('div');
-      dot.classList.add('dot');
-      grid.children[index].appendChild(dot);
-    }
-
-    function handleClick(index) {
-      if (paused || lives <= 0 || cooldownActive) return;
-      const cell = grid.children[index];
-      if (index === currentDot) {
-        score++;
-        scoreEl.textContent = score;
-        if (score > highscore) {
-          highscore = score;
-          highscoreEl.textContent = highscore;
-          localStorage.setItem('highscore', highscore);
-        }
-        if (score % 10 === 0) moveSpeed *= 0.9;
-        moveDot();
-      } else {
-        const audio = new Audio('sounds/fail.mp3');
-        audio.play();
-        cell.style.background = '#c0392b';
-        setTimeout(() => cell.style.background = '', 400);
-        lives--;
-        livesEl.textContent = lives;
-        if (lives <= 0) triggerGameOver();
-      }
-    }
-
-    function moveDot() {
-      const next = Math.floor(Math.random() * 9);
-      currentDot = next;
-      placeDot(currentDot);
-      clearInterval(interval);
-      interval = setInterval(() => moveDot(), moveSpeed);
-    }
-
-    function startTimer() {
-      setInterval(() => {
-        if (!paused && lives > 0 && !cooldownActive) {
-          time++;
-          timeEl.textContent = time;
-        }
+    function startGame() {
+      if (isStarted) return;
+      isStarted = true;
+      bgMusic.play();
+      interval = setInterval(() => {
+        time++;
+        timerEl.textContent = `${time}s`;
       }, 1000);
-    }
-
-    function triggerGameOver() {
-      clearInterval(interval);
-      gameOver.style.display = 'block';
-      cooldownActive = true;
-      let cooldown = 300;
-      cooldownEl.textContent = cooldown;
-      const timer = setInterval(() => {
-        cooldown--;
-        cooldownEl.textContent = cooldown;
-        if (cooldown <= 0) {
-          clearInterval(timer);
-          cooldownActive = false;
-          resetGame();
-        }
-      }, 1000);
-    }
-
-    function resetGame() {
-      score = 0;
-      lives = 3;
-      time = 0;
-      moveSpeed = 1000;
-      scoreEl.textContent = score;
-      livesEl.textContent = lives;
-      timeEl.textContent = time;
-      gameOver.style.display = 'none';
-      currentDot = 4;
-      placeDot(currentDot);
       moveDot();
     }
 
-    pauseBtn.addEventListener('click', () => {
-      paused = !paused;
-      pauseBtn.textContent = paused ? '▶️ Resume' : '⏸ Pause';
+    function moveDot() {
+      cells.forEach(c => c.innerHTML = "");
+      const dot = document.createElement("div");
+      dot.className = "dot";
+      dot.style.background = `radial-gradient(circle, var(--ballColor, red), #911)`;
+      dotIndex = Math.floor(Math.random() * 9);
+      cells[dotIndex].appendChild(dot);
+      setTimeout(() => {
+        if (isStarted && !clicked) miss();
+        clicked = false;
+        moveDot();
+      }, moveSpeed);
+    }
+
+    let clicked = false;
+
+    function handleClick(i) {
+      if (!isStarted) startGame();
+      if (i === dotIndex) {
+        clicked = true;
+        score++;
+        scoreEl.textContent = score;
+        if (score > highScore) {
+          highScore = score;
+          highScoreEl.textContent = highScore;
+        }
+        if (score % 10 === 0) cheerSound.play();
+        unlockAchievements(score);
+        if (score % 10 === 0 && moveSpeed > 200) moveSpeed -= 100;
+        cells[i].firstChild.style.background = "green";
+      } else {
+        miss(i);
+      }
+    }
+
+    function miss(i) {
+      if (lives <= 0) return;
+      lives--;
+      livesEl.textContent = lives;
+      failSound.play();
+      if (i !== undefined) cells[i].classList.add("missed");
+      setTimeout(() => cells[i]?.classList.remove("missed"), 300);
+      if (lives === 0) endGame();
+    }
+
+    function endGame() {
+      clearInterval(interval);
+      isStarted = false;
+      gameOverEl.style.display = "block";
+      watchAdEl.style.display = "block";
+      let cd = cooldownTime;
+      const cdTimer = setInterval(() => {
+        cd--;
+        document.getElementById("cooldown").textContent = cd;
+        if (cd <= 0) {
+          clearInterval(cdTimer);
+          lives = 3;
+          livesEl.textContent = lives;
+          gameOverEl.style.display = "none";
+          watchAdEl.style.display = "none";
+          score = 0;
+          scoreEl.textContent = "0";
+          time = 0;
+          timerEl.textContent = "0s";
+        }
+      }, 1000);
+    }
+
+    function watchAdToRevive() {
+      alert("📢 Simulating ad...");
+      lives = 1;
+      livesEl.textContent = lives;
+      gameOverEl.style.display = "none";
+      watchAdEl.style.display = "none";
+      startGame();
+    }
+
+    function toggleAchievements() {
+      const panel = document.getElementById("achievements");
+      panel.style.display = panel.style.display === "none" ? "block" : "none";
+    }
+
+    function unlockAchievements(score) {
+      if (score >= 10) document.getElementById("a10").style.color = "lime";
+      if (score >= 20) document.getElementById("a20").style.color = "lime";
+      if (score >= 30) document.getElementById("a30").style.color = "lime";
+      if (score >= 40) document.getElementById("a40").style.color = "lime";
+    }
+
+    document.getElementById("colorPicker").addEventListener("input", e => {
+      document.documentElement.style.setProperty("--ballColor", e.target.value);
     });
 
-    // Start game
-    placeDot(currentDot);
-    moveDot();
-    startTimer();
+    document.getElementById("downloadBtn").onclick = () => {
+      window.location.href = "chasing-dot.zip";
+    };
+
+    // Init dot in center
+    cells[4].innerHTML = `<div class="dot"></div>`;
   </script>
 </body>
 </html>
