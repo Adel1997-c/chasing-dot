@@ -66,19 +66,12 @@
   <div id="combo-msg"></div>
   <div id="challenge-msg"></div>
 
-  <button id="hardModeBtn">Hard Mode: OFF</button>
-  <button id="challengeModeBtn">Challenge Mode: OFF</button>
+  <button onclick="downloadGame()">⬇️ Download Game</button>
   <div id="grid"></div>
 
-  <button onclick="downloadGame()">⬇️ Download Game</button>
-
-  <!-- Sound & Ad Scripts -->
   <audio id="failSound" src="sounds/fail.mp3" preload="auto"></audio>
   <audio id="bgMusic" src="sounds/bg.mp3" preload="auto" loop></audio>
   <audio id="cheerSound" src="sounds/cheer.mp3" preload="auto"></audio>
-
-  <!-- Example Adsterra (replace with your ad script) -->
-  <script type='text/javascript' src='//your-ad-network-script.js'></script>
 
   <script>
     const grid = document.getElementById('grid');
@@ -86,9 +79,6 @@
     const timerEl = document.getElementById('timer');
     const highscoreEl = document.getElementById('highscore');
     const comboMsg = document.getElementById('combo-msg');
-    const challengeMsg = document.getElementById('challenge-msg');
-    const hardBtn = document.getElementById('hardModeBtn');
-    const challengeBtn = document.getElementById('challengeModeBtn');
 
     const failSound = document.getElementById('failSound');
     const bgMusic = document.getElementById('bgMusic');
@@ -97,30 +87,11 @@
     let score = 0, combo = 0, time = 0;
     let activeIndex = -1;
     let speed = 1000;
-    let hardMode = false;
-    let challengeMode = false;
     let gameStarted = false;
-    let soundStarted = false;
-
-    let hitsInChallenge = 0;
-    let challengeActive = false;
-    let timer, loop, challengeTimer;
+    let timer, loop, soundStarted = false;
 
     const highscore = localStorage.getItem('dotHighScore') || 0;
     highscoreEl.textContent = highscore;
-
-    hardBtn.onclick = () => {
-      if (gameStarted) return;
-      hardMode = !hardMode;
-      hardBtn.textContent = `Hard Mode: ${hardMode ? 'ON' : 'OFF'}`;
-      speed = hardMode ? 500 : 1000;
-    };
-
-    challengeBtn.onclick = () => {
-      if (gameStarted) return;
-      challengeMode = !challengeMode;
-      challengeBtn.textContent = `Challenge Mode: ${challengeMode ? 'ON' : 'OFF'}`;
-    };
 
     for (let i = 0; i < 9; i++) {
       const cell = document.createElement('div');
@@ -145,7 +116,7 @@
 
       setTimeout(() => {
         if (cells[index].textContent === '🔴') endGame();
-      }, hardMode ? 1000 : speed - 100);
+      }, 1000);
     }
 
     function handleClick(e) {
@@ -163,11 +134,8 @@
 
       if (!gameStarted) {
         gameStarted = true;
-        hardBtn.disabled = true;
-        challengeBtn.disabled = true;
         loop = setInterval(randomDot, speed);
         startTimer();
-        if (challengeMode) startChallenge();
       }
 
       if (combo % 10 === 0) {
@@ -177,18 +145,8 @@
         comboMsg.textContent = '';
       }
 
-      if (challengeActive) {
-        hitsInChallenge++;
-        challengeMsg.textContent = `🎯 Challenge: ${hitsInChallenge}/5`;
-        if (hitsInChallenge >= 5) {
-          challengeMsg.textContent = '🎉 Challenge Completed!';
-          clearTimeout(challengeTimer);
-          challengeActive = false;
-        }
-      }
-
       clearInterval(loop);
-      speed = Math.max(hardMode ? 200 : 300, speed - 30);
+      speed = Math.max(300, speed - 30);
       setTimeout(() => {
         loop = setInterval(randomDot, speed);
       }, 100);
@@ -201,18 +159,6 @@
       }, 1000);
     }
 
-    function startChallenge() {
-      hitsInChallenge = 0;
-      challengeActive = true;
-      challengeMsg.textContent = '🎯 Challenge: 0/5 (10s)';
-      challengeTimer = setTimeout(() => {
-        if (hitsInChallenge < 5) {
-          challengeMsg.textContent = '❌ Time’s up! Challenge failed.';
-        }
-        challengeActive = false;
-      }, 10000);
-    }
-
     function endGame() {
       clearInterval(loop);
       clearInterval(timer);
@@ -220,7 +166,6 @@
       failSound.play();
       bgMusic.pause();
       comboMsg.textContent = '';
-      challengeMsg.textContent = '';
       const best = localStorage.getItem('dotHighScore') || 0;
       if (score > best) {
         localStorage.setItem('dotHighScore', score);
@@ -232,11 +177,14 @@
     }
 
     function downloadGame() {
-      window.open("https://your-zip-download-link.com/chasing-dot.zip", "_blank");
+      window.open("https://github.com/Adel1997-c/chasing-dot/archive/refs/heads/main.zip", "_blank");
     }
 
     cells.forEach(cell => cell.addEventListener('click', handleClick));
     showFirstDot();
   </script>
+
+  <!-- Adsterra / Propeller placeholder (replace with your own script) -->
+  <script type='text/javascript' src='//pl26612890.profitableratecpm.com/24/06/95/240695f3aaeb6d2182a3800363e46177.js'></script>
 </body>
 </html>
