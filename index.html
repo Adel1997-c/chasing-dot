@@ -51,9 +51,6 @@
     .miss {
       background: #c0392b !important;
     }
-    #difficulty {
-      margin-bottom: 15px;
-    }
     #download {
       margin-top: 25px;
     }
@@ -74,25 +71,18 @@
 <body>
   <h1>🎯 Chasing Dot</h1>
 
-  <div id="difficulty">
-    <label for="mode">Difficulty: </label>
-    <select id="mode">
-      <option value="normal">Normal</option>
-      <option value="hard">Hard</option>
-      <option value="challenge">Challenge Mode</option>
-    </select>
-  </div>
-
   <div id="info">
-    🕒 Time: <span id="time">0s</span> |
+    ⏱ Time: <span id="time">0s</span> |
     🌟 Score: <span id="score">0</span> |
-    🏅 High Score: <span id="highScore">0</span>
+    🏆 High Score: <span id="highScore">0</span> |
+    ❤️ Lives: <span id="lives">3</span>
   </div>
 
   <div id="grid"></div>
 
   <div id="download">
     <button onclick="window.open('https://example.com/download.zip')">📱 Download Game</button>
+    <button onclick="togglePause()">⏸️ Pause</button>
   </div>
 
   <audio id="bgMusic" src="sounds/bg.mp3" loop preload="auto"></audio>
@@ -104,7 +94,7 @@
     const timeDisplay = document.getElementById("time");
     const scoreDisplay = document.getElementById("score");
     const highScoreDisplay = document.getElementById("highScore");
-    const modeSelect = document.getElementById("mode");
+    const livesDisplay = document.getElementById("lives");
 
     const bgMusic = document.getElementById("bgMusic");
     const failSound = document.getElementById("failSound");
@@ -113,12 +103,13 @@
     let score = 0;
     let highScore = 0;
     let time = 0;
+    let lives = 3;
     let timer;
     let moveInterval;
     let gameStarted = false;
     let currentDot;
     let gameSpeed = 1000;
-    let soundStarted = false;
+    let paused = false;
 
     for (let i = 0; i < 9; i++) {
       const cell = document.createElement("div");
@@ -132,7 +123,10 @@
       gameStarted = true;
       time = 0;
       score = 0;
+      lives = 3;
       scoreDisplay.textContent = score;
+      livesDisplay.textContent = lives;
+      timeDisplay.textContent = "0s";
       timer = setInterval(() => {
         time++;
         timeDisplay.textContent = `${time}s`;
@@ -144,6 +138,7 @@
     }
 
     function moveDot() {
+      if (paused) return;
       const cells = document.querySelectorAll(".cell");
       cells.forEach(cell => {
         cell.innerHTML = "";
@@ -157,19 +152,24 @@
     }
 
     grid.addEventListener("click", (e) => {
+      if (paused) return;
       const cell = e.target.closest(".cell");
       if (!cell) return;
       const clickedIndex = parseInt(cell.dataset.index);
 
       if (!gameStarted) {
-        adjustSpeed();
         startGame();
       }
 
       if (clickedIndex === currentDot) {
         score++;
         scoreDisplay.textContent = score;
-        if (score % 10 === 0) cheerSound.play();
+        if (score % 10 === 0) {
+          cheerSound.play();
+          gameSpeed = Math.max(200, gameSpeed - 100);
+          clearInterval(moveInterval);
+          moveInterval = setInterval(moveDot, gameSpeed);
+        }
         if (score > highScore) {
           highScore = score;
           highScoreDisplay.textContent = highScore;
@@ -179,21 +179,24 @@
       } else {
         failSound.play();
         cell.classList.add("miss");
-        stopGame();
+        lives--;
+        livesDisplay.textContent = lives;
+        if (lives <= 0) {
+          stopGame();
+        }
       }
     });
-
-    function adjustSpeed() {
-      const mode = modeSelect.value;
-      if (mode === "hard") gameSpeed = 600;
-      else if (mode === "challenge") gameSpeed = 300;
-      else gameSpeed = 1000;
-    }
 
     function stopGame() {
       clearInterval(timer);
       clearInterval(moveInterval);
       gameStarted = false;
+      paused = false;
+      alert("Game Over! Your score: " + score);
+    }
+
+    function togglePause() {
+      paused = !paused;
     }
   </script>
 </body>
